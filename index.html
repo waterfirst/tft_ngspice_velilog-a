@@ -3,643 +3,597 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>TFT 열화 → OLED 애노드 전류</title>
-<meta name="description" content="ngspice + Verilog-A + 머신러닝으로 TFT 열화에서 6T1C·8T1C 화소 애노드 전류와 프레임 응답까지. 합성 데이터 교보재.">
+<title>무엇을 측정할 것인가 — TFT 열화와 화소 전류</title>
+<meta name="description" content="TFT 열화 → 6T1C·8T1C 화소 애노드 전류 시뮬레이션에서 얻은 세 가지 결론과 공동연구 제안. 합성 데이터 교보재.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@600;900&family=Noto+Sans+KR:wght@400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --ink:#0f172a; --ink2:#334155; --mute:#64748b; --line:#e2e8f0; --bg:#f8fafc; --card:#ffffff;
-  --navy:#0b1f3a; --accent:#ea580c; --accent-soft:#fff1e6; --blue:#1d4ed8; --blue-soft:#e8efff;
-  --green:#15803d; --green-soft:#e7f6ec; --red:#b91c1c; --red-soft:#fdecec; --amber:#b45309; --amber-soft:#fff6e0;
-  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  --paper:#f6f4ee; --card:#fcfcfb; --ink:#1b1a17; --ink2:#46443d; --mute:#7a776d; --rule:#dedad0;
+  --accent:#eb6834; --accent-ink:#b8461a; --accent-soft:#fbe7dc;
+  --blue:#2a78d6; --gray:#b9b6ac;
+  --serif:'Noto Serif KR','Nanum Myeongjo',serif;
+  --sans:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,Consolas,monospace;
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth;scroll-padding-top:64px}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.7 'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;-webkit-font-smoothing:antialiased}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:17px/1.65 var(--sans);-webkit-font-smoothing:antialiased;word-break:keep-all;overflow-wrap:break-word}
+img{max-width:100%;display:block}
+code{font-family:var(--mono);font-size:.86em;background:#ebe8df;padding:.08em .35em;border-radius:3px}
 a{color:var(--blue)}
-code,.mono{font-family:var(--mono);font-size:.88em}
-code{background:#eef2f7;padding:.1em .35em;border-radius:4px}
-pre{font-family:var(--mono);font-size:13.5px;line-height:1.55;background:var(--navy);color:#e2e8f0;padding:16px 18px;border-radius:10px;overflow-x:auto;margin:14px 0}
-pre code{background:none;padding:0;color:inherit}
-img{max-width:100%;display:block;margin:0 auto}
 
-.bar{position:sticky;top:0;z-index:20;background:rgba(11,31,58,.96);backdrop-filter:blur(6px);color:#cbd5e1;border-bottom:1px solid #1e3a5f}
-.bar-in{max-width:1180px;margin:0 auto;padding:0 20px;height:52px;display:flex;align-items:center;gap:18px}
-.bar b{color:#fff;font-weight:700;white-space:nowrap}
-.bar nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;flex:1}
-.bar nav::-webkit-scrollbar{display:none}
-.bar nav a{color:#cbd5e1;text-decoration:none;font-size:13.5px;padding:6px 10px;border-radius:6px;white-space:nowrap}
-.bar nav a:hover,.bar nav a.on{background:#1e3a5f;color:#fff}
-.bar .kbd{font-size:12px;color:#94a3b8;white-space:nowrap}
-@media (max-width:760px){.bar .kbd{display:none}}
+.progress{position:fixed;top:0;left:0;height:4px;background:var(--accent);width:0;z-index:30;transition:width .2s}
+.counter{position:fixed;right:18px;bottom:14px;z-index:30;font:600 13px/1 var(--mono);color:var(--mute);background:rgba(246,244,238,.92);padding:7px 10px;border-radius:6px;border:1px solid var(--rule)}
+.counter a{color:var(--mute);text-decoration:none;margin-left:10px}
+.counter a:hover{color:var(--accent-ink)}
 
-section{padding-block:72px;padding-inline:20px;border-bottom:1px solid var(--line)}
-section:nth-of-type(even){background:var(--card)}
-.wrap{max-width:1080px;margin:0 auto}
-.eyebrow{font:600 13px/1 var(--mono);letter-spacing:.08em;color:var(--accent);text-transform:uppercase;margin:0 0 12px}
-h1{font-size:clamp(34px,5.4vw,60px);line-height:1.12;font-weight:900;letter-spacing:-.02em;margin:0 0 18px}
-h2{font-size:clamp(26px,3.4vw,38px);line-height:1.25;font-weight:900;letter-spacing:-.015em;margin:0 0 14px}
-h3{font-size:19px;font-weight:700;margin:28px 0 10px}
-.lede{font-size:clamp(17px,1.9vw,21px);color:var(--ink2);max-width:860px;margin:0 0 22px}
-p{margin:0 0 14px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:22px;align-items:start}
-.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
-@media (max-width:860px){.grid2,.grid3{grid-template-columns:1fr}}
+.slide{min-height:100vh;padding-block:64px;padding-inline:24px;display:flex;align-items:center;border-bottom:1px solid var(--rule);position:relative}
+.slide>.in{width:100%;max-width:1120px;margin:0 auto}
+.kicker{font:600 13px/1 var(--mono);letter-spacing:.06em;color:var(--accent-ink);margin:0 0 18px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.kicker span{color:var(--mute);font-weight:400}
+h1,h2{font-family:var(--serif);font-weight:900;letter-spacing:-.02em;margin:0}
+h2{font-size:clamp(27px,3.4vw,42px);line-height:1.3;max-width:1040px}
+h2 em{font-style:normal;color:var(--accent-ink)}
+h3{font-size:18px;font-weight:700;margin:0 0 8px}
+.sub{font-size:clamp(17px,1.7vw,20px);color:var(--ink2);margin:16px 0 0;max-width:900px}
+.evidence{margin-top:30px}
+.sowhat{margin-top:28px;display:flex;gap:14px;align-items:baseline;border-top:2px solid var(--ink);padding-top:14px;font-size:clamp(17px,1.7vw,20px);font-weight:700}
+.sowhat::before{content:"그래서";font:600 13px/1 var(--mono);color:#fff;background:var(--ink);padding:6px 8px;border-radius:3px;flex:none;transform:translateY(-2px)}
+.note{font-size:14px;color:var(--mute);margin-top:10px}
+.two{display:grid;grid-template-columns:1.1fr .9fr;gap:32px;align-items:start}
+.two.even{grid-template-columns:1fr 1fr}
+@media (max-width:900px){.two,.two.even{grid-template-columns:1fr}}
+.panel{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:18px 20px}
+.chart{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:14px 16px;overflow-x:auto}
+.chart svg{width:100%;height:auto;min-width:560px;display:block}
+.chart svg text{font-family:var(--sans)}
+ul.clean{margin:0;padding-left:20px}
+ul.clean li{margin:6px 0}
 
-.hero{background:linear-gradient(160deg,#0b1f3a 0%,#123057 60%,#1b3f6e 100%);color:#e2e8f0;padding-block:96px 80px;border-bottom:none}
-.hero h1{color:#fff}
-.hero .lede{color:#cbd5e1}
-.hero .eyebrow{color:#fdba74}
-.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:26px 0 34px}
-.flow span{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);color:#f1f5f9;padding:8px 14px;border-radius:999px;font-size:14.5px;font-weight:500}
-.flow i{color:#fdba74;font-style:normal}
-.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
-@media (max-width:860px){.kpis{grid-template-columns:1fr}}
-.kpi{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);border-radius:14px;padding:18px 20px}
-.kpi .n{font:700 34px/1.1 var(--mono);color:#fff;letter-spacing:-.02em}
-.kpi .n small{font-size:16px;color:#94a3b8;font-weight:400}
-.kpi .t{font-size:14.5px;color:#cbd5e1;margin-top:8px;line-height:1.55}
-.warn{display:inline-block;margin-top:26px;font-size:13.5px;color:#fde68a;background:rgba(251,191,36,.1);border:1px solid rgba(251,191,36,.35);padding:7px 12px;border-radius:8px}
+.title{background:var(--ink);color:#efece4;border-bottom:none}
+.title .kicker{color:#f4a27c}
+.title h1{font-size:clamp(32px,4vw,50px);line-height:1.22;color:#fff;max-width:1040px}
+.title h1 em{font-style:normal;color:#f4a27c;border-bottom:3px solid #f4a27c}
+.claims{margin-top:44px;display:grid;border-top:1px solid #4a4840}
+.claim{display:grid;grid-template-columns:64px 1fr 250px;gap:18px;align-items:center;padding:18px 0;border-bottom:1px solid #4a4840;text-decoration:none;color:inherit}
+.claim:hover{background:rgba(255,255,255,.04)}
+.claim .no{font:900 34px/1 var(--serif);color:#f4a27c}
+.claim .txt{font-size:clamp(17px,1.8vw,21px);line-height:1.5}
+.claim .txt b{color:#fff}
+.claim .txt small{display:block;color:#a8a498;font-size:14.5px;margin-top:4px}
+.claim .num{font:600 clamp(18px,1.9vw,23px)/1.1 var(--mono);color:#fff;text-align:right}
+.claim .num small{display:block;font:400 12.5px/1.3 var(--sans);color:#a8a498;margin-top:4px}
+@media (max-width:760px){.claim{grid-template-columns:44px 1fr}.claim .num{grid-column:2;text-align:left}}
+.ask{margin-top:30px;display:flex;gap:16px;align-items:baseline;flex-wrap:wrap;font-size:17px;color:#d8d4c8}
+.ask b{color:#fff}
+.ask .lbl{font:600 13px/1 var(--mono);background:#f4a27c;color:var(--ink);padding:6px 8px;border-radius:3px}
+.disclaimer{margin-top:26px;font-size:13.5px;color:#8f8b80}
 
-.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
-section:nth-of-type(even) .card{background:var(--bg)}
-.fig{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin:18px 0}
-.fig figcaption{font-size:13.5px;color:var(--mute);margin-top:8px;padding:0 4px}
-.tbl{overflow-x:auto;margin:14px 0;border:1px solid var(--line);border-radius:12px;background:#fff}
-table{border-collapse:collapse;width:100%;font-size:14.5px;min-width:520px}
-th,td{padding:9px 12px;text-align:left;border-bottom:1px solid var(--line);vertical-align:top}
-th{background:#f1f5f9;font-weight:700;color:var(--ink2);font-size:13.5px;white-space:nowrap}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media (max-width:900px){.stats{grid-template-columns:1fr}}
+.stat{background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:20px 22px}
+.stat .lab{font:600 12.5px/1.3 var(--mono);color:var(--mute);letter-spacing:.03em}
+.stat .big{font:600 clamp(28px,3.2vw,40px)/1.1 var(--mono);margin:12px 0 6px;letter-spacing:-.02em}
+.stat .big .arrow{color:var(--mute);font-size:.6em;margin:0 .2em}
+.stat .big .hi{color:var(--accent-ink)}
+.stat p{margin:8px 0 0;font-size:15px;color:var(--ink2)}
+
+.qs{list-style:none;margin:0;padding:0;counter-reset:q}
+.qs li{counter-increment:q;display:grid;grid-template-columns:34px 1fr;gap:10px;padding:11px 0;border-bottom:1px solid var(--rule)}
+.qs li::before{content:counter(q);font:900 22px/1.2 var(--serif);color:var(--accent-ink)}
+.qs li b{display:block}
+.qs li span{color:var(--ink2);font-size:15px}
+.phases{display:grid;grid-template-columns:repeat(4,1fr);margin-top:24px;border:1px solid var(--rule);border-radius:10px;overflow:hidden;background:var(--card)}
+.phase{padding:14px 16px;border-right:1px solid var(--rule)}
+.phase:last-child{border-right:none}
+.phase .t{font:600 12.5px/1 var(--mono);color:var(--accent-ink)}
+.phase b{display:block;margin:6px 0 4px}
+.phase span{font-size:14px;color:var(--ink2)}
+@media (max-width:900px){.phases{grid-template-columns:1fr 1fr}.phase:nth-child(2){border-right:none}}
+
+.trust .ok{color:#1d6b43}.trust .no{color:var(--accent-ink)}
+.catch{margin-top:22px;background:var(--ink);color:#e9e5da;border-radius:10px;padding:20px 22px;font-size:16px}
+.catch b{color:#fff}
+.catch .big{font:600 30px/1 var(--mono);color:#f4a27c;margin-right:8px}
+
+.appx{min-height:auto;padding-block:56px}
+.appx h2{font-size:clamp(22px,2.6vw,30px)}
+.tbl{overflow-x:auto;border:1px solid var(--rule);border-radius:10px;background:var(--card);margin-top:14px}
+table{border-collapse:collapse;width:100%;font-size:14.5px;min-width:480px}
+th,td{padding:8px 12px;border-bottom:1px solid var(--rule);text-align:left;vertical-align:top}
+th{font-weight:700;color:var(--ink2);background:#efece4;font-size:13.5px;white-space:nowrap}
 tr:last-child td{border-bottom:none}
-td.num,th.num{text-align:right;font-family:var(--mono);font-size:13.5px;white-space:nowrap}
+td.n,th.n{text-align:right;font-family:var(--mono);font-size:13.5px;white-space:nowrap}
 tr.hl td{background:var(--accent-soft)}
-.bad{color:var(--red);font-weight:700}
-.good{color:var(--green);font-weight:700}
-
-.callout{border-left:4px solid var(--accent);background:var(--accent-soft);padding:14px 18px;border-radius:0 10px 10px 0;margin:18px 0}
-.callout.blue{border-color:var(--blue);background:var(--blue-soft)}
-.callout.green{border-color:var(--green);background:var(--green-soft)}
-.callout.red{border-color:var(--red);background:var(--red-soft)}
-.callout.amber{border-color:var(--amber);background:var(--amber-soft)}
-.callout > b:first-child{display:block;margin-bottom:4px}
-.tag{display:inline-block;font:600 12px/1 var(--mono);padding:5px 8px;border-radius:6px;background:#eef2f7;color:var(--ink2);margin-right:6px;vertical-align:middle}
-.tag.g{background:var(--green-soft);color:var(--green)}
-.tag.r{background:var(--red-soft);color:var(--red)}
-ul.tight{margin:0 0 14px;padding-left:20px}
-ul.tight li{margin:4px 0}
-
-.bars{display:grid;gap:8px;margin:14px 0}
-.brow{display:grid;grid-template-columns:120px 1fr 78px;gap:10px;align-items:center;font-size:14px}
-.btrack{background:#eef2f7;border-radius:6px;height:22px;position:relative;overflow:hidden}
-.bfill{position:absolute;inset:0 auto 0 0;background:var(--accent);border-radius:6px}
-.bfill.m{background:#94a3b8}
-.bfill.b{background:var(--blue)}
-.brow .v{font-family:var(--mono);font-size:13px;text-align:right}
-
-.chap{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin-top:18px}
-.chap a{display:block;text-decoration:none;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;transition:border-color .15s,transform .15s}
-.chap a:hover{border-color:var(--accent);transform:translateY(-2px)}
-.chap .no{font:600 12px/1 var(--mono);color:var(--accent)}
-.chap .ti{font-weight:700;margin:6px 0 4px;line-height:1.4}
-.chap .q{font-size:13.5px;color:var(--mute);line-height:1.5}
-.chap a.new{border-color:#fdba74}
-
-footer{padding:40px 20px 60px;color:var(--mute);font-size:13.5px;text-align:center}
+.fig{background:#fff;border:1px solid var(--rule);border-radius:10px;padding:12px;margin-top:14px}
+.chap{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-top:16px}
+.chap a{display:block;background:var(--card);border:1px solid var(--rule);border-radius:8px;padding:12px 14px;text-decoration:none;color:var(--ink)}
+.chap a:hover{border-color:var(--accent)}
+.chap .no{font:600 12px/1 var(--mono);color:var(--accent-ink)}
+.chap .ti{font-weight:700;margin-top:5px;line-height:1.4}
+pre{font:13.5px/1.55 var(--mono);background:var(--ink);color:#e9e5da;padding:14px 16px;border-radius:8px;overflow-x:auto}
 
 @media print{
-  .bar{display:none}
-  section{page-break-inside:avoid;padding-block:28px}
-  .hero{background:#0b1f3a !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .progress,.counter{display:none}
+  .slide{min-height:auto;page-break-after:always;border:none}
+  .title{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 </style>
 </head>
 <body>
+<div class="progress" id="progress"></div>
+<div class="counter"><span id="cnt">1 / 9</span><a href="#appendix">부록</a><a href="#s1">처음</a></div>
 
-<header class="bar">
-  <div class="bar-in">
-    <b>TFT → 애노드 전류</b>
-    <nav id="nav">
-      <a href="#why">문제</a>
-      <a href="#pipeline">파이프라인</a>
-      <a href="#extract">측정·추출</a>
-      <a href="#aging">열화식</a>
-      <a href="#pixel">6T1C</a>
-      <a href="#ai">AI vs Hybrid</a>
-      <a href="#t8">8T1C</a>
-      <a href="#hyst">히스테리시스</a>
-      <a href="#collab">공동연구</a>
-      <a href="#limits">한계</a>
-      <a href="#book">교재</a>
-    </nav>
-    <span class="kbd">← → 로 넘김</span>
-  </div>
-</header>
-
-<!-- 0. HERO -->
-<section class="hero" id="top">
-  <div class="wrap">
-    <p class="eyebrow">ngspice · Verilog-A · Machine Learning</p>
-    <h1>TFT 하나가 늙으면<br>화소 전류는 얼마나 줄어드나</h1>
-    <p class="lede">TFT 열화 측정에서 시작해 <b>모델 파라미터 → 열화식 → 6T1C·8T1C 화소 회로 시뮬레이션</b>으로 시간별 OLED 애노드 전류를 계산한다. 같은 데이터로 <b>기존 물리 흐름 · AI 단독 · Hybrid</b>를 비교하고, 8T1C가 실제로 무엇을 바꾸는지 <b>프레임 단위로</b> 확인한다.</p>
-    <div class="flow">
-      <span>① I–V 측정</span><i>→</i><span>② 모델카드 추출</span><i>→</i><span>③ 열화식</span><i>→</i><span>④ 화소 회로 과도해석</span><i>→</i><span>⑤ 애노드 전류</span>
+<!-- 1. THESIS -->
+<section class="slide title" id="s1">
+  <div class="in">
+    <p class="kicker">TFT 열화 → OLED 화소 전류 · ngspice + Verilog-A + ML <span>2026-09</span></p>
+    <h1>화소 전류 예측의 정확도는<br>시뮬레이터보다 <em>무엇을 측정하느냐</em>가 정한다</h1>
+    <div class="claims">
+      <a class="claim" href="#s3">
+        <div class="no">①</div>
+        <div class="txt"><b>어느 TFT를 잴 것인가</b> — 가장 많이 늙는 TFT가 아니라 구동 T1이 전류를 깎는다<small>스트레스는 T5가 T1의 15배, 전류 영향은 T1이 T5의 18배</small></div>
+        <div class="num">−13.7% vs −0.8%<small>T1 vs T5 (그 TFT만 3000 h)</small></div>
+      </a>
+      <a class="claim" href="#s4">
+        <div class="no">②</div>
+        <div class="txt"><b>AI를 어디에 둘 것인가</b> — 물리를 대체하면 처음 보는 조건에서 무너지고, 잔차만 맡기면 버틴다<small>같은 합성 화소 3300개, 학습에 없던 저계조에서 채점</small></div>
+        <div class="num">126% vs 2.6%<small>AI 단독 vs Hybrid 평균 오차</small></div>
+      </a>
+      <a class="claim" href="#s6">
+        <div class="no">③</div>
+        <div class="txt"><b>어떤 물리를 잴 것인가</b> — 8T1C(OBS)의 잔상 개선은 회로가 아니라 트랩 시정수 τ가 정한다<small>τ = 0.1 / 1 / 10 ms에서 감소폭이 크게 다르고, 수명 이득은 없음</small></div>
+        <div class="num">−88% → −4%<small>τ에 따른 첫 프레임 오차 감소</small></div>
+      </a>
     </div>
-    <div class="kpis">
-      <div class="kpi"><div class="n">−13.7<small>%</small></div><div class="t">3000 h 뒤 중계조 전류를 깎는 몫이 가장 큰 TFT는 <b>가장 많이 늙는 T5(−0.8%)가 아니라 구동 T1</b>이었다.</div></div>
-      <div class="kpi"><div class="n">126<small>%</small> vs 2.6<small>%</small></div><div class="t">처음 보는 저계조에서 <b>AI 단독(GBM)은 무너지고</b>, 물리 결과의 잔차만 보정한 <b>Hybrid는 버텼다</b> (평균 오차).</div></div>
-      <div class="kpi"><div class="n">−25<small>%</small> / ±0</div><div class="t">8T1C의 T8(OBS)은 계조 전환 <b>첫 프레임 오차를 25% 줄였지만</b>, 3000 h <b>유지율(수명)에는 이득이 없었다.</b></div></div>
-    </div>
-    <div class="warn">⚠ 모든 데이터는 공개 문헌 수준 파라미터로 만든 <b>합성값</b>이다. 실측·PDK·특정 제조사 회로는 포함하지 않는다.</div>
+    <div class="ask"><span class="lbl">제안</span><span>첫 공동 작업은 시뮬레이션이 아니라 <b>T1의 stress / read / recovery 측정 프로토콜과 τ 범위를 맞추는 것</b>이다.</span></div>
+    <p class="disclaimer">모든 수치는 공개 문헌 수준 파라미터로 만든 합성 데이터에서 나왔다. 실측·PDK·특정 제조사 회로 없음. 방법을 검증하는 교보재이며 제품 예측이 아니다.</p>
   </div>
 </section>
 
-<!-- 1. WHY -->
-<section id="why">
-  <div class="wrap">
-    <p class="eyebrow">01 · 문제</p>
-    <h2>밝기는 전류로 정해지고, 전류는 TFT 여러 개가 함께 만든다</h2>
-    <p class="lede">OLED 휘도는 애노드 전류에 비례한다. 그 전류는 화소 안 TFT 6~8개가 함께 만든다. 그래서 TFT 하나하나의 열화를 <b>회로에 넣어 돌려봐야</b> 화소 전류가 시간에 따라 어떻게 변하는지 알 수 있다.</p>
-    <div class="grid2">
-      <div class="card">
-        <h3 style="margin-top:0">비유 — 작은 악단의 음량</h3>
-        <ul class="tight">
-          <li>화소 = 6~8명이 연주하는 악단, 애노드 전류 = 객석에서 들리는 음량</li>
-          <li>연주자(TFT)마다 나이 들며 힘이 빠진다 → 열화</li>
-          <li>그런데 <b>파트마다 음량 기여가 다르다.</b> 주선율(구동 T1)이 약해지면 바로 들리고, 잠깐 들어오는 심벌즈(스위치)는 티가 안 난다</li>
-          <li>약해진 파트를 크게 연주시키는 지휘자 = <b>문턱전압 보상 회로</b></li>
+<!-- 2. METHOD -->
+<section class="slide" id="s2">
+  <div class="in">
+    <p class="kicker">02 · 어떻게 확인했나</p>
+    <h2>실측 전에 <em>채점이 가능한</em> 시뮬레이션 환경부터 만들었다</h2>
+    <p class="sub">정답을 아는 합성 세계를 만들고, 실제 연구 흐름(측정 → 추출 → 열화식 → 회로 → 전류)을 그 위에서 돌려 각 칸이 얼마나 틀리는지 따로 채점했다.</p>
+    <div class="evidence two">
+      <figure class="chart" style="margin:0"><img src="textbook/figs/f01_pipeline.svg" alt="측정에서 애노드 전류까지 다섯 칸 흐름"></figure>
+      <div class="panel">
+        <h3>믿을 수 있게 만든 세 가지 장치</h3>
+        <ul class="clean">
+          <li><b>정답 모델 ≠ 피팅 모델.</b> "측정값"을 만든 모델과 추출에 쓴 모델이 다르다. 같으면 오차 0이 나와 답을 베낀 채점이 된다</li>
+          <li><b>칸별 채점.</b> 최종 전류 오차가 추출·열화식·회로 중 어디서 왔는지 나눠 본다</li>
+          <li><b>재현 게이트.</b> <code>run_all.sh</code> 한 번으로 모든 결과가 바이트 단위까지 같게 재생성된다</li>
         </ul>
-      </div>
-      <div class="card">
-        <h3 style="margin-top:0">비유가 깨지는 곳</h3>
-        <ul class="tight">
-          <li><b>연주자가 독립적이지 않다.</b> 한 TFT의 열화가 다른 TFT의 바이어스를 바꾸고, 그게 다시 스트레스를 바꾼다</li>
-          <li><b>음량은 한 숫자가 아니다.</b> 전류는 프레임 안의 파형이다 — 8장에서 프레임 단위로 다시 본다</li>
-          <li><b>밝기 ≠ 전류.</b> OLED 효율도 늙는다. 이 자료는 TFT 열화 → 애노드 전류까지만</li>
-        </ul>
+        <p class="note" style="margin-bottom:0">ngspice 45.2 + OpenVAF(Verilog-A) + Python. 교과서형 6T1C LTPO 화소와 예시 8T1C.</p>
       </div>
     </div>
+    <div class="sowhat">실측이 들어와도 같은 채점 틀을 그대로 쓴다 — 바뀌는 건 "정답" 자리뿐이다.</div>
   </div>
 </section>
 
-<!-- 2. PIPELINE -->
-<section id="pipeline">
-  <div class="wrap">
-    <p class="eyebrow">02 · 전체 흐름</p>
-    <h2>다섯 칸 파이프라인과 AI가 들어갈 두 자리</h2>
-    <figure class="fig"><img src="textbook/figs/f01_pipeline.svg" alt="측정에서 애노드 전류까지 다섯 칸 흐름" loading="lazy"><figcaption>AI는 흐름을 한 번에 건너뛰거나(AI 단독), ④의 결과에 남은 오차만 고친다(Hybrid).</figcaption></figure>
-    <div class="tbl"><table>
-      <tr><th>칸</th><th>입력</th><th>출력</th><th>도구</th></tr>
-      <tr><td>① 측정</td><td>스트레스 시간별 TFT</td><td>transfer·output I–V</td><td>합성 <code>gen_meas.py</code></td></tr>
-      <tr><td>② 모델카드</td><td>I–V</td><td>VT0, U0, SS, GOFF …</td><td><code>scipy.optimize.least_squares</code></td></tr>
-      <tr><td>③ 열화식</td><td>시간별 모델카드</td><td>ΔVth(t), μ(t) 계수</td><td>stretched exponential</td></tr>
-      <tr><td>④ 화소 회로</td><td>카드 + 열화식 + 구동 파형</td><td>노드 전압·전류 파형</td><td>ngspice 45.2 + OpenVAF (Verilog-A)</td></tr>
-      <tr><td>⑤ 애노드 전류</td><td>파형</td><td>발광 구간 평균 전류</td><td><code>meas tran AVG</code></td></tr>
-    </table></div>
-    <div class="callout blue"><b>재현성</b>sudo 없이 사용자 영역에 설치한 ngspice 45.2와 OpenVAF-Reloaded로 돌린다. <code>bash code/run_all.sh</code> 한 번이면 저장소에 들어 있는 결과 파일과 <b>바이트 단위로 같은</b> 결과가 나온다.</div>
+<!-- 3. CLAIM 1 -->
+<section class="slide" id="s3">
+  <div class="in">
+    <p class="kicker">03 · 결론 ① 어느 TFT를 잴 것인가</p>
+    <h2>전류를 깎는 건 가장 많이 늙는 T5가 아니라 <em>구동 T1</em>이다</h2>
+    <div class="evidence chart">
+      <svg viewBox="0 0 1000 380" role="img" aria-label="TFT별 스트레스 지수와 전류 변화 비교">
+        <text x="110" y="28" font-size="16" font-weight="700" fill="#1b1a17">얼마나 늙나 — 스트레스 지수</text>
+        <text x="570" y="28" font-size="16" font-weight="700" fill="#1b1a17">얼마나 전류를 깎나 — 그 TFT만 3000 h 열화</text>
+        <g stroke="#dedad0"><line x1="110" y1="48" x2="110" y2="340"/><line x1="570" y1="48" x2="570" y2="340"/></g>
+        <g font-size="15" fill="#1b1a17" text-anchor="end">
+          <text x="96" y="80" font-weight="700">T1 구동</text><text x="96" y="128">T5 발광</text><text x="96" y="176">T6 발광</text>
+          <text x="96" y="224">T3 보상</text><text x="96" y="272">T2 기록</text><text x="96" y="320">T4 초기화</text>
+        </g>
+        <rect x="110" y="62" width="22.3" height="26" rx="4" fill="#eb6834"><title>T1 스트레스 지수 0.34</title></rect>
+        <rect x="110" y="110" width="333.2" height="26" rx="4" fill="#b9b6ac"><title>T5 스트레스 지수 5.09</title></rect>
+        <rect x="110" y="158" width="299.8" height="26" rx="4" fill="#b9b6ac"><title>T6 스트레스 지수 4.58</title></rect>
+        <rect x="110" y="206" width="3.3" height="26" rx="1.5" fill="#b9b6ac"><title>T3 스트레스 지수 0.05</title></rect>
+        <rect x="110" y="254" width="3.3" height="26" rx="1.5" fill="#b9b6ac"><title>T2 스트레스 지수 0.05</title></rect>
+        <rect x="110" y="302" width="3.3" height="26" rx="1.5" fill="#b9b6ac"><title>T4 스트레스 지수 0.05</title></rect>
+        <g font-family="IBM Plex Mono,monospace" font-size="14" fill="#46443d">
+          <text x="140" y="80" font-weight="600" fill="#1b1a17">0.34</text><text x="451" y="128">5.09</text><text x="418" y="176">4.58</text>
+          <text x="122" y="224">0.05</text><text x="122" y="272">0.05</text><text x="122" y="320">0.05</text>
+        </g>
+        <rect x="570" y="62" width="329" height="26" rx="4" fill="#eb6834"><title>T1만 열화: 전류 −13.71%</title></rect>
+        <rect x="570" y="110" width="18.2" height="26" rx="4" fill="#b9b6ac"><title>T5만 열화: 전류 −0.76%</title></rect>
+        <rect x="570" y="158" width="5.8" height="26" rx="2" fill="#b9b6ac"><title>T6만 열화: 전류 −0.24%</title></rect>
+        <rect x="570" y="206" width="4.8" height="26" rx="2" fill="#b9b6ac"><title>T3만 열화: 전류 −0.20%</title></rect>
+        <rect x="570" y="254" width="1" height="26" fill="#b9b6ac"><title>T2만 열화: 0.00%</title></rect>
+        <rect x="570" y="302" width="1" height="26" fill="#b9b6ac"><title>T4만 열화: 0.00%</title></rect>
+        <g font-family="IBM Plex Mono,monospace" font-size="14" fill="#46443d">
+          <text x="907" y="80" font-weight="600" fill="#1b1a17">−13.71%</text><text x="596" y="128">−0.76%</text><text x="584" y="176">−0.24%</text>
+          <text x="583" y="224">−0.20%</text><text x="580" y="272">0.00%</text><text x="580" y="320">0.00%</text>
+        </g>
+        <text x="110" y="370" font-size="13" fill="#7a776d">스트레스 지수 = duty × (|Vgs| / 5 V)²</text>
+        <text x="570" y="370" font-size="13" fill="#7a776d">정답 6T1C 회로, 중계조 Vdata 3.6 V, 0 h 대비 전류 변화</text>
+      </svg>
+    </div>
+    <div class="two even" style="margin-top:20px">
+      <div class="panel"><h3>왜 T5는 영향이 작나</h3>T5·T6는 발광 중 <b>선형영역 스위치</b>다. |Vth|가 2 V 넘게 변해도 켜진 저항이 조금 늘 뿐이다.</div>
+      <div class="panel"><h3>왜 T1은 보상 회로가 있는데도 크나</h3>게이트가 |Vth| 이동(0.857 V)을 <b>61 mV 덜 따라갔다</b>. 오버드라이브가 약 1 V라, 이상적이면 −3.5%(이동도 감소분)였을 손실이 −13.7%가 됐다.</div>
+    </div>
+    <div class="sowhat">측정 시간은 T1(LTPS PMOS)에 먼저 쓴다. 스트레스 순위로 측정 우선순위를 정하면 틀린다.</div>
   </div>
 </section>
 
-<!-- 3. EXTRACT -->
-<section id="extract">
-  <div class="wrap">
-    <p class="eyebrow">03 · 측정과 모델카드 추출</p>
-    <h2>정답을 모르는 실측 상황을 흉내 내려면, 정답 모델과 피팅 모델을 다르게 둔다</h2>
-    <div class="grid2">
-      <div>
-        <p>"측정값"은 <b>정답 모델</b> <code>ptft_true.va</code>가 만든다. 피팅은 그보다 단순한 <code>ptft_fit.va</code>로 한다. 둘이 같으면 오차 0이 나와서 <b>답을 베낀 채점</b>이 된다.</p>
-        <div class="tbl"><table>
-          <tr><th></th><th>정답 모델</th><th>피팅 모델</th></tr>
-          <tr><td>문턱</td><td><code>VT0 + 열화 − SIGMA·Vsd</code></td><td><code>VT0 + 열화</code></td></tr>
-          <tr><td>이동도 감쇠</td><td>THETA 있음</td><td>없음</td></tr>
-          <tr><td>구성</td><td colspan="2">6개 중 T3·T4는 IGZO NMOS, 나머지는 LTPS PMOS (LTPO 흉내). <code>POL=±1</code> 하나로 표현</td></tr>
-        </table></div>
-        <ul class="tight">
-          <li><b>log 전류로 피팅한다.</b> 선형으로 맞추면 µA 영역만 맞고 서브문턱(pA)은 무시된다</li>
-          <li><b>측정 바닥(15 fA) 아래 점은 버리지 않고 상한으로</b> 쓴다. 버리면 Ioff·GOFF가 아무 값이나 된다</li>
-          <li>Verilog-A와 numpy 쌍둥이 식이 같은지 먼저 검사한다 (상대오차 ≤ 1e-4)</li>
-        </ul>
-      </div>
-      <div>
-        <figure class="fig" style="margin-top:0"><img src="textbook/figs/f02_answer_key.svg" alt="정답 모델과 피팅 모델 분리" loading="lazy"><figcaption>정답지와 채점 대상을 분리한다.</figcaption></figure>
-        <figure class="fig"><img src="textbook/figs/f03_censored.svg" alt="측정 바닥 아래 점을 상한으로 처리" loading="lazy"><figcaption>바닥 아래 점은 "이보다 작다"는 상한 정보다.</figcaption></figure>
-      </div>
+<!-- 4. CLAIM 2 -->
+<section class="slide" id="s4">
+  <div class="in">
+    <p class="kicker">04 · 결론 ② AI를 어디에 둘 것인가</p>
+    <h2>AI 단독은 처음 보는 계조에서 <em>126%</em> 틀렸고, 물리 결과를 보정만 한 Hybrid는 2.6%였다</h2>
+    <div class="evidence chart">
+      <svg viewBox="0 0 1000 330" role="img" aria-label="세 시험 조건에서 네 방법의 평균 절대 백분율 오차">
+        <g font-size="15" font-weight="700" fill="#1b1a17">
+          <text x="130" y="28">학습 범위 안</text><text x="420" y="28">3000 h 부근 (시간 외삽)</text><text x="710" y="28">저계조 (처음 보는 조건)</text>
+        </g>
+        <g font-size="15" fill="#1b1a17" text-anchor="end">
+          <text x="118" y="83">기존 물리</text><text x="118" y="141">AI-GBM</text><text x="118" y="199">AI-MLP</text><text x="118" y="257" font-weight="700">Hybrid</text>
+        </g>
+        <g stroke="#dedad0"><line x1="130" y1="50" x2="130" y2="280"/><line x1="420" y1="50" x2="420" y2="280"/><line x1="710" y1="50" x2="710" y2="280"/></g>
+        <rect x="130" y="64" width="92" height="28" rx="4" fill="#5f5e58"><title>기존 · 범위 안 3.6%</title></rect>
+        <rect x="130" y="122" width="46" height="28" rx="4" fill="#2a78d6"><title>AI-GBM · 범위 안 1.8%</title></rect>
+        <rect x="130" y="180" width="199" height="28" rx="4" fill="#9ec5f4"><title>AI-MLP · 범위 안 7.8%</title></rect>
+        <rect x="130" y="238" width="25.6" height="28" rx="4" fill="#eb6834"><title>Hybrid · 범위 안 1.0%</title></rect>
+        <g font-family="IBM Plex Mono,monospace" font-size="14" fill="#46443d"><text x="229" y="83">3.6%</text><text x="183" y="141">1.8%</text><text x="336" y="199">7.8%</text><text x="163" y="257" font-weight="600" fill="#1b1a17">1.0%</text></g>
+        <rect x="420" y="64" width="53.3" height="28" rx="4" fill="#5f5e58"><title>기존 · 시간 외삽 5.1%</title></rect>
+        <rect x="420" y="122" width="38.7" height="28" rx="4" fill="#2a78d6"><title>AI-GBM · 시간 외삽 3.7%</title></rect>
+        <rect x="420" y="180" width="210" height="28" rx="4" fill="#9ec5f4"><title>AI-MLP · 시간 외삽 20.1%</title></rect>
+        <rect x="420" y="238" width="43.9" height="28" rx="4" fill="#eb6834"><title>Hybrid · 시간 외삽 4.2%</title></rect>
+        <g font-family="IBM Plex Mono,monospace" font-size="14" fill="#46443d"><text x="480" y="83">5.1%</text><text x="466" y="141">3.7%</text><text x="637" y="199">20.1%</text><text x="471" y="257" font-weight="600" fill="#1b1a17">4.2%</text></g>
+        <rect x="710" y="64" width="10.8" height="28" rx="3" fill="#5f5e58"><title>기존 · 저계조 6.7%</title></rect>
+        <rect x="710" y="122" width="203" height="28" rx="4" fill="#2a78d6"><title>AI-GBM · 저계조 125.7%</title></rect>
+        <rect x="710" y="180" width="99" height="28" rx="4" fill="#9ec5f4"><title>AI-MLP · 저계조 61.3%</title></rect>
+        <rect x="710" y="238" width="4.2" height="28" rx="2" fill="#eb6834"><title>Hybrid · 저계조 2.6%</title></rect>
+        <g font-family="IBM Plex Mono,monospace" font-size="14" fill="#46443d"><text x="728" y="83">6.7%</text><text x="920" y="141" font-weight="600" fill="#1b1a17">125.7%</text><text x="816" y="199">61.3%</text><text x="722" y="257" font-weight="600" fill="#1b1a17">2.6%</text></g>
+        <text x="130" y="312" font-size="13" fill="#7a776d">평균 절대 백분율 오차(MAPE). 패널마다 가로축 범위가 다르므로 숫자로 비교할 것. 합성 화소 3300개, 시드 1개.</text>
+      </svg>
     </div>
+    <div class="two even" style="margin-top:20px">
+      <div class="panel"><h3>AI 단독이 무너진 방식</h3>저계조 화소 400개 전부에 약 180–215 nA를 답했다(정답 50–150 nA). 트리 모델은 학습 범위 밖에서 <b>가장 가까운 칸의 값을 반복</b>한다. 튜닝이 아니라 구조의 문제다.</div>
+      <div class="panel"><h3>Hybrid가 버틴 이유</h3>경로는 물리(추출 + SPICE)가 정하고 AI는 <code>log(정답 / 물리)</code>만 학습한다. 학습 화소 100개일 때도 1.9%(GBM 5.0%, 물리 3.6%). <b>실측 화소가 비쌀수록</b> 이 차이가 중요해진다.</div>
+    </div>
+    <div class="sowhat">AI는 물리를 대체하지 말고 잔차를 맡긴다. 성능은 반드시 "범위 안 / 시간 외삽 / 조건 외삽"을 나눠 보고한다.</div>
   </div>
 </section>
 
-<!-- 4. AGING -->
-<section id="aging">
-  <div class="wrap">
-    <p class="eyebrow">04 · 열화식과 블라인드 예측</p>
-    <h2>1000시간 데이터로 3000시간을 맞힐 수 있나</h2>
-    <p class="lede">0–1000 h의 ΔVth와 이동도 감소를 식 하나로 이어 붙이면 측정하지 않은 시간의 모델카드를 만들 수 있다. 이 식을 믿어도 되는지는 <b>피팅에 안 쓴 3000 h로만</b> 판단한다.</p>
-<pre><code>ΔVth(t) = AVT · [1 − exp(−(t/TAUV)^BETAV)]
-μ(t)/μ0 = 1 − AMU · [1 − exp(−(t/TAUM)^BETAM)]</code></pre>
-    <figure class="fig"><img src="textbook/figs/f04_blind.svg" alt="블라인드 3000 h 검증" loading="lazy"></figure>
-    <div class="tbl"><table>
-      <tr><th>TFT</th><th class="num">ΔVth 정답 @3000 h</th><th class="num">열화식 예측</th><th class="num">차이</th><th class="num">이동도 감소 정답</th><th class="num">열화식</th></tr>
-      <tr><td>T1 구동</td><td class="num">0.856 V</td><td class="num">0.843 V</td><td class="num">−13 mV</td><td class="num">3.48%</td><td class="num">2.18%</td></tr>
-      <tr><td>T3 IGZO</td><td class="num">0.154 V</td><td class="num">0.140 V</td><td class="num">−14 mV</td><td class="num">0.63%</td><td class="num">1.17%</td></tr>
-      <tr><td>T5 발광</td><td class="num">2.818 V</td><td class="num">2.725 V</td><td class="num bad">−93 mV</td><td class="num">11.4%</td><td class="num">10.5%</td></tr>
-    </table></div>
-    <div class="grid3">
-      <div class="callout amber"><b>외삽은 한쪽으로 틀린다</b>정답은 로그 법칙이라 끝없이 자라고, stretched exp는 포화한다. 3000 h에서 일관되게 작게 예측했다.</div>
-      <div class="callout amber"><b>계수를 물리량으로 읽지 마라</b>T1 피팅값 TAUV = 1371 h는 정답(τ = 200 h)과 전혀 다른데, 1000 h 안에서는 곡선이 겹친다.</div>
-      <div class="callout green"><b>그래도 전류 오차는 작다</b>화소 전류로 채점하면 3000 h 블라인드 오차 −1.2 / −1.7 / −4.0%로, 0 h 오차(−3.9 / −5.3 / −8.7%)보다 작았다.</div>
-    </div>
-  </div>
-</section>
-
-<!-- 5. PIXEL -->
-<section id="pixel">
-  <div class="wrap">
-    <p class="eyebrow">05 · 6T1C 화소 회로</p>
-    <h2>보상 회로가 있어도 전류는 15% 줄었고, 범인은 T1이었다</h2>
-    <div class="grid2">
-      <figure class="fig" style="margin-top:0"><img src="textbook/figs/f05_6t1c.svg" alt="6T1C 화소 회로" loading="lazy"><figcaption>교과서형 공개 6T1C 토폴로지. T3·T4 IGZO NMOS, 나머지 LTPS PMOS.</figcaption></figure>
+<!-- 5. CLAIM 3 setup -->
+<section class="slide" id="s5">
+  <div class="in">
+    <p class="kicker">05 · 결론 ③으로 가는 길</p>
+    <h2>6T1C에 T7·T8을 붙여도 수명은 <em>소수점까지 같았다</em> — 모델에 그 현상이 없었다</h2>
+    <div class="evidence two">
+      <figure class="chart" style="margin:0"><img src="textbook/figs/f11_8t1c_schematic.svg" alt="예시 8T1C 화소 회로도"></figure>
       <div>
-        <figure class="fig" style="margin-top:0"><img src="textbook/figs/f06_timing.svg" alt="구동 타이밍" loading="lazy"></figure>
-        <div class="tbl"><table>
-          <tr><th>단계</th><th>켜지는 TFT</th><th>일어나는 일</th></tr>
-          <tr><td>초기화</td><td>T4</td><td>게이트를 VINIT −3.5 V로 리셋</td></tr>
-          <tr><td>보상·기록</td><td>T2, T3</td><td>T3가 T1을 다이오드로 묶음 → 게이트가 <b>Vdata − |Vth,T1|</b>에서 멈춤</td></tr>
-          <tr><td>발광</td><td>T5, T6</td><td>ELVDD → T5 → T1 → T6 → OLED. 이상적이면 |Vth|가 식에서 빠짐</td></tr>
-        </table></div>
-      </div>
-    </div>
-
-    <h3>결과 1 · 시간별 애노드 전류 (정답 회로)</h3>
-    <div class="tbl"><table>
-      <tr><th>계조 (Vdata)</th><th class="num">0 h</th><th class="num">1000 h</th><th class="num">3000 h</th><th class="num">3000 h 유지율</th></tr>
-      <tr><td>고계조 (3.0 V)</td><td class="num">525.5 nA</td><td class="num">480.0 nA</td><td class="num">463.9 nA</td><td class="num">88.3%</td></tr>
-      <tr><td>중계조 (3.6 V)</td><td class="num">237.3 nA</td><td class="num">211.4 nA</td><td class="num">202.5 nA</td><td class="num">85.3%</td></tr>
-      <tr class="hl"><td>저계조 (4.1 V)</td><td class="num">84.2 nA</td><td class="num">71.1 nA</td><td class="num">66.8 nA</td><td class="num">79.3%</td></tr>
-    </table></div>
-
-    <div class="grid2">
-      <div>
-        <h3>결과 2 · 누가 전류를 깎나 (그 TFT만 3000 h 열화, 중계조)</h3>
-        <div class="bars">
-          <div class="brow"><span><b>T1</b> 구동</span><div class="btrack"><div class="bfill" style="width:100%"></div></div><span class="v">−13.71%</span></div>
-          <div class="brow"><span>T5 발광(전원)</span><div class="btrack"><div class="bfill m" style="width:5.5%"></div></div><span class="v">−0.76%</span></div>
-          <div class="brow"><span>T6 발광(OLED)</span><div class="btrack"><div class="bfill m" style="width:1.8%"></div></div><span class="v">−0.24%</span></div>
-          <div class="brow"><span>T3 보상</span><div class="btrack"><div class="bfill m" style="width:1.5%"></div></div><span class="v">−0.20%</span></div>
-          <div class="brow"><span>T2, T4</span><div class="btrack"><div class="bfill m" style="width:0%"></div></div><span class="v">0.00%</span></div>
+        <div class="stat"><div class="lab">3000 h 전류 유지율 · 중계조</div><div class="big">85.3%<span class="arrow">=</span>85.3%</div><p>6T1C = 8T1C. 고계조 88.3 = 88.3, 저계조 79.3 = 79.3. T7·T8만 늙혀도 전류 변화 0.00%.</p></div>
+        <div class="panel" style="margin-top:16px">
+          <h3>T7·T8이 막으려는 것</h3>
+          <ul class="clean">
+            <li><b>T8 (OBS)</b> 기록 직전 T1에 강한 온바이어스 → 직전 화면의 <b>트랩 기억(히스테리시스)</b>을 지운다</li>
+            <li><b>T7</b> 애노드 리셋 → OLED 잔류 전하 제거</li>
+          </ul>
+          <p class="note" style="margin-bottom:0">그런데 정답 모델에는 히스테리시스가 없고, 지표는 2프레임 정상상태 평균뿐이었다. 회로도는 넷리스트와 1:1로 대조한 예시 회로이며 제조사 회로가 아니다.</p>
         </div>
-        <p>스트레스 지수는 T5(5.09)가 T1(0.34)의 15배다. 그래도 T5·T6는 발광 중 <b>선형영역 스위치</b>라 |Vth|가 2 V 넘게 변해도 저항이 조금 늘 뿐이다. → <b>측정 예산은 가장 많이 늙는 TFT가 아니라 가장 민감한 TFT에 쓴다.</b></p>
-      </div>
-      <div>
-        <h3>보상은 왜 완벽하지 않았나</h3>
-        <div class="tbl"><table>
-          <tr><th>중계조</th><th class="num">저장된 게이트</th><th class="num">이상값 Vdata − |Vth|</th></tr>
-          <tr><td>0 h</td><td class="num">2.369 V</td><td class="num">2.400 V</td></tr>
-          <tr><td>3000 h</td><td class="num">1.573 V</td><td class="num">1.543 V</td></tr>
-          <tr class="hl"><td><b>변화</b></td><td class="num"><b>−0.796 V</b></td><td class="num"><b>−0.857 V</b></td></tr>
-        </table></div>
-        <p>게이트가 |Vth| 변화를 <b>61 mV 덜 따라갔다.</b> 오버드라이브가 약 1 V뿐이라 6%가 전류에서는 제곱 이상으로 커진다. 이상적 보상이라면 이동도 감소분(−3.5%)만 남아야 하는데 실제로는 −13.7%였다.</p>
-        <p style="color:var(--mute);font-size:14px">원인 후보: 0.2 ms 기록 시간 안에 서브문턱으로 들어가 끝까지 못 따라감 · 드레인 전압에 따른 문턱 이동 · 스위칭 킥백</p>
       </div>
     </div>
-
-    <h3>결과 3 · 파이프라인 채점 (예측 / 정답 − 1)</h3>
-    <figure class="fig"><img src="code/02_pipeline/figs/pipeline_grade.png" alt="파이프라인 채점 그림" loading="lazy"></figure>
-    <div class="tbl"><table>
-      <tr><th>방식</th><th class="num">0 h 고/중/저</th><th class="num">3000 h 고/중/저 (블라인드)</th></tr>
-      <tr><td><code>cards</code> 시간별 추출 카드</td><td class="num">−4.4 / −5.8 / −9.0%</td><td class="num">−2.6 / −3.1 / −5.3%</td></tr>
-      <tr class="hl"><td><code>law</code> 0 h 카드 + 열화식 (≤1000 h 피팅)</td><td class="num">−3.9 / −5.3 / −8.7%</td><td class="num"><b>−1.2 / −1.7 / −4.0%</b></td></tr>
-    </table></div>
-    <div class="callout"><b>칸별로 채점해야 보이는 사실</b>오차의 주범은 열화식이 아니라 <b>피팅 모델의 정적 형태</b>(SIGMA·THETA 없음)였다. 최종 전류 오차 하나만 보면 이 분리가 불가능하다.</div>
+    <div class="sowhat">질문이 모델에 없으면 회로를 바꿔도 답이 안 나온다. 그래서 트랩을 모델에 넣고, 지표를 계조 전환 직후 프레임으로 바꿨다.</div>
   </div>
 </section>
 
-<!-- 6. AI -->
-<section id="ai">
-  <div class="wrap">
-    <p class="eyebrow">06 · 기존 흐름 vs AI vs Hybrid</p>
-    <h2>AI는 학습 범위 안에서 이기고, 밖에서 무너진다</h2>
-    <p class="lede">같은 합성 화소 3300개로 세 방법을 비교했다. 입력은 TFT 6개의 transfer 곡선(3% 잡음) 253차원이고, 정답은 정답 모델로 돌린 6T1C 애노드 전류다.</p>
-    <div class="grid2">
-      <figure class="fig" style="margin-top:0"><img src="textbook/figs/f07_ml_routes.svg" alt="세 가지 예측 경로" loading="lazy"></figure>
-      <figure class="fig" style="margin-top:0"><img src="textbook/figs/f08_extrapolation.svg" alt="학습 범위와 외삽" loading="lazy"></figure>
+<!-- 6. CLAIM 3 -->
+<section class="slide" id="s6">
+  <div class="in">
+    <p class="kicker">06 · 결론 ③ 어떤 물리를 잴 것인가</p>
+    <h2>트랩을 넣자 T8이 잔상을 줄였다 — 그러나 효과는 <em>트랩 시정수 τ</em>에 따라 −88%에서 −4%까지 달라졌다</h2>
+    <div class="evidence two">
+      <div class="chart">
+        <svg viewBox="0 0 640 400" role="img" aria-label="트랩 시정수에 따른 첫 프레임 오차 E1, 6T1C와 8T1C">
+          <text x="70" y="24" font-size="15" font-weight="700" fill="#1b1a17">첫 프레임 오차 E1 (%) · 60 Hz · KH 0.05 · 0 h</text>
+          <g stroke="#e9e6dd"><line x1="70" y1="258.9" x2="600" y2="258.9"/><line x1="70" y1="187.8" x2="600" y2="187.8"/><line x1="70" y1="116.7" x2="600" y2="116.7"/><line x1="70" y1="45.6" x2="600" y2="45.6"/></g>
+          <line x1="70" y1="330" x2="600" y2="330" stroke="#b9b6ac"/>
+          <g font-family="IBM Plex Mono,monospace" font-size="12.5" fill="#7a776d" text-anchor="end"><text x="62" y="334">0</text><text x="62" y="263">2</text><text x="62" y="192">4</text><text x="62" y="121">6</text><text x="62" y="50">8</text></g>
+          <line x1="120" y1="60" x2="120" y2="330" stroke="#b8461a" stroke-dasharray="4 4"/>
+          <text x="128" y="322" font-size="12.5" fill="#b8461a">OBS 펄스 100 µs</text>
+          <g font-family="IBM Plex Mono,monospace" font-size="13" fill="#46443d" text-anchor="middle"><text x="120" y="354">0.1 ms</text><text x="335" y="354">1 ms</text><text x="550" y="354">10 ms</text></g>
+          <text x="335" y="384" font-size="13.5" fill="#46443d" text-anchor="middle">트랩 시정수 τ (로그 축)</text>
+          <polyline points="120,59.1 335,52.0 550,198.8" fill="none" stroke="#2a78d6" stroke-width="2.5"/>
+          <polyline points="120,296.9 335,122.4 550,203.8" fill="none" stroke="#eb6834" stroke-width="2.5"/>
+          <g stroke="#fcfcfb" stroke-width="2">
+            <circle cx="120" cy="59.1" r="6" fill="#2a78d6"><title>6T1C τ 0.1 ms: E1 7.62%</title></circle>
+            <circle cx="335" cy="52.0" r="6" fill="#2a78d6"><title>6T1C τ 1 ms: E1 7.82%</title></circle>
+            <circle cx="550" cy="198.8" r="6" fill="#2a78d6"><title>6T1C τ 10 ms: E1 3.69%</title></circle>
+            <circle cx="120" cy="296.9" r="6" fill="#eb6834"><title>8T1C τ 0.1 ms: E1 0.93%</title></circle>
+            <circle cx="335" cy="122.4" r="6" fill="#eb6834"><title>8T1C τ 1 ms: E1 5.84%</title></circle>
+            <circle cx="550" cy="203.8" r="6" fill="#eb6834"><title>8T1C τ 10 ms: E1 3.55%</title></circle>
+          </g>
+          <g font-family="IBM Plex Mono,monospace" font-size="12.5" fill="#46443d">
+            <text x="132" y="76">7.62</text><text x="345" y="44">7.82</text><text x="560" y="190">3.69</text>
+            <text x="132" y="290">0.93</text><text x="345" y="140">5.84</text><text x="560" y="222">3.55</text>
+          </g>
+          <g font-size="13" font-weight="700" fill="#b8461a"><text x="170" y="200">−88%</text><text x="290" y="92">−25%</text><text x="512" y="244">−4%</text></g>
+          <g font-size="13" fill="#1b1a17">
+            <line x1="400" y1="250" x2="422" y2="250" stroke="#2a78d6" stroke-width="3"/><text x="430" y="255">6T1C</text>
+            <line x1="400" y1="274" x2="422" y2="274" stroke="#eb6834" stroke-width="3"/><text x="430" y="279">8T1C (T8 OBS)</text>
+          </g>
+        </svg>
+      </div>
+      <div>
+        <div class="panel">
+          <h3>무엇을 쟀나</h3>
+          <ul class="clean">
+            <li>TFT 모델에 트랩 상태 1개: 과거 vsg를 시정수 τ로 기억 → |Vth|에 반영</li>
+            <li>저계조 또는 고계조에서 <b>중계조로 전환한 첫 프레임</b>의 전류 차이 = E1 (잔상 크기)</li>
+            <li>T7을 빼면 8T1C와 같고 T8을 빼면 6T1C와 같다 → <b>효과는 전부 T8</b></li>
+          </ul>
+        </div>
+        <div class="panel" style="margin-top:14px">
+          <h3>왜 τ가 정하나</h3>
+          OBS 펄스는 한 프레임에 100 µs뿐이다. τ가 그와 비슷하면 한 번에 트랩이 리셋되고(−88%), 10배 길면 일부만(−25%), 100배 길면 거의 못 지운다(−4%). VOBS를 4 → 6 V로 올려도 E1은 5.86 → 5.81%로 거의 그대로였다.
+        </div>
+        <p class="note">게이트: 트랩을 끄면 이전 결과 재현(오차 ≤ 6e-6) · τ 검증 63.2% · 시간 간격 20 µs vs 2 µs 차이 0.01% · 2회 실행 바이트 동일.</p>
+      </div>
     </div>
+    <div class="sowhat">8T1C가 잔상에 얼마나 좋은지는 회로 시뮬레이션만으로 못 정한다. T1의 트랩 시정수 분포를 측정해야 정해진다.</div>
+  </div>
+</section>
+
+<!-- 7. CAVEATS OF 3 -->
+<section class="slide" id="s7">
+  <div class="in">
+    <p class="kicker">07 · 결론 ③의 단서</p>
+    <h2>OBS는 잔상 대책이지 수명 대책이 아니고, <em>가속 시뮬레이션은 잔상을 숨긴다</em></h2>
+    <div class="evidence stats">
+      <div class="stat">
+        <div class="lab">3000 h 유지율 · KH 0.05, τ 1 ms</div>
+        <div class="big">85.2<span class="arrow">→</span>84.7%</div>
+        <p><b>6T1C → 8T1C, 수명 이득 없음.</b> 차이 0.5%p는 시드 1개라 "나빠진다"고 할 근거도 약하다.</p>
+      </div>
+      <div class="stat">
+        <div class="lab">6T1C 첫 프레임 오차 E1 · 같은 KH·τ</div>
+        <div class="big">7.82<span class="arrow">→</span><span class="hi">2.13%</span></div>
+        <p><b>실제 60 Hz → 가속 1 ms 프레임.</b> 프레임 길이 ≈ τ라 한 프레임 안에서 평균돼 잔상이 약 1/4로 보였다.</p>
+      </div>
+      <div class="stat">
+        <div class="lab">0 h 정상 전류 · 중계조</div>
+        <div class="big">256<span class="arrow">→</span>271 nA</div>
+        <p><b>6T1C → 8T1C, +5.6%.</b> OBS가 기록 직전 트랩 상태를 바꿔 보상 회로가 저장하는 |Vth|도 바뀐다. 감마 보정이 OBS 조건에 묶인다.</p>
+      </div>
+    </div>
+    <div class="sowhat">"8T1C가 6T1C보다 좋은가"는 지표를 정하기 전엔 답이 없다. 수명·잔상·전류 오프셋을 따로 보고하고, 결론은 실타이밍으로 확인한다.</div>
+  </div>
+</section>
+
+<!-- 8. ASK -->
+<section class="slide" id="s8">
+  <div class="in">
+    <p class="kicker">08 · 제안</p>
+    <h2>그래서 첫 공동 작업은 시뮬레이션이 아니라 <em>측정 프로토콜 합의</em>다</h2>
+    <div class="evidence two">
+      <div>
+        <h3>첫 미팅에서 확인하고 싶은 다섯 가지</h3>
+        <ol class="qs">
+          <li><div><b>T1(LTPS PMOS)의 stress / read / recovery 순서와 read 지연</b><span>지연이 τ보다 길면 가역 성분이 데이터에 남지 않는다 → 결론 ③을 검증할 수 없다</span></div></li>
+          <li><div><b>가역 회복과 비가역 이동을 나눈 실험이 있는가</b><span>비가역 → 열화식(수명), 가역 → 트랩 τ·세기(잔상). 섞으면 둘 다 틀린다</span></div></li>
+          <li><div><b>사용 중인 compact model과 기대 출력 1개</b><span>우리 쪽 실행이 맞는지 판정할 유일한 기준</span></div></li>
+          <li><div><b>화소 전류의 정의 — 어느 노드, 어느 구간 평균, 어떤 타이밍</b><span>정의가 다르면 같은 숫자가 다른 뜻이 된다 (가속 vs 실타이밍 1/4 착시)</span></div></li>
+          <li><div><b>모델 코드·데이터의 반출 범위</b><span>공개 저장소에는 합성 예제만. 실측·넷리스트·모델 코드는 합의 범위 안에서만</span></div></li>
+        </ol>
+      </div>
+      <div class="panel">
+        <h3>우리가 가져가는 것</h3>
+        <ul class="clean">
+          <li>검증 게이트가 달린 재현 가능한 파이프라인 (측정 → 추출 → 열화식 → 회로 → 전류)</li>
+          <li>TFT별 민감도·제거 실험 틀 — 실제 회로로 바로 다시 만들 수 있음</li>
+          <li>물리 + AI 잔차 학습(Hybrid)과 3종 검증 (범위 안 / 시간 외삽 / 조건 외삽)</li>
+          <li>트랩 파라미터를 recovery 곡선에서 뽑는 절차: 가역 진폭 / Δ → 세기, 회복 곡선 → τ, read 지연을 바꿔 0으로 외삽</li>
+          <li>교재 11편 — 연구실 신규 인원 온보딩용</li>
+        </ul>
+      </div>
+    </div>
+    <div class="phases">
+      <div class="phase"><div class="t">0 · 2주</div><b>정의·기준선</b><span>대응표, 프로토콜 통일, 기대 출력 재현</span></div>
+      <div class="phase"><div class="t">1 · 1–2개월</div><b>단일 TFT</b><span>T1 초기·열화 I–V, 열화식, τ 분포</span></div>
+      <div class="phase"><div class="t">2 · 2–3개월</div><b>회로 민감도</b><span>실제 회로 민감도·제거, 프레임 응답</span></div>
+      <div class="phase"><div class="t">3 · 4–6개월</div><b>Hybrid</b><span>잔차 ML, 새 소자·미래 시간 오차 범위</span></div>
+    </div>
+    <div class="sowhat">성공 기준은 R²가 아니라 순서다 — I–V 재현 → 전류 변화 방향 → 크기 → 처음 보는 소자·후기 시간의 오차 범위.</div>
+  </div>
+</section>
+
+<!-- 9. TRUST -->
+<section class="slide" id="s9">
+  <div class="in">
+    <p class="kicker">09 · 이 자료를 어디까지 믿을 것인가</p>
+    <h2>방법은 검증했고, <em>숫자는 실측으로 다시 만들어야 한다</em></h2>
+    <div class="evidence two even trust">
+      <div class="panel">
+        <h3 class="ok">✓ 믿어도 되는 것</h3>
+        <ul class="clean">
+          <li>파이프라인이 <b>틀리면 드러나게</b> 짜여 있다: 정답≠피팅 모델, 블라인드 시간, 칸별 채점</li>
+          <li>게이트 통과: numpy 쌍둥이 식 일치, 트랩을 끄면 이전 결과 재현, τ 검증, 시간 간격 수렴</li>
+          <li><code>run_all.sh</code> 재실행 시 모든 결과 바이트 동일</li>
+          <li>경향의 방향: 민감 TFT ≠ 많이 늙는 TFT, 트리 모델의 외삽 실패, OBS 효과의 τ 의존</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3 class="no">✗ 믿으면 안 되는 것</h3>
+        <ul class="clean">
+          <li><b>구체적 수치</b> — 전부 합성, 시드 1개, 파라미터 세트 1개</li>
+          <li>6T1C는 교과서형, 8T1C는 예시 하나. <b>특정 제조사 회로가 아니다</b></li>
+          <li>트랩은 1개·충방전 대칭·모든 TFT 같은 세기, τ ≤ 10 ms만 확인</li>
+          <li>스트레스 이력 고정(되먹임 없음), OLED는 다이오드 + 0.3 pF, 휘도 수명·온도 가속 제외</li>
+        </ul>
+      </div>
+    </div>
+    <div class="catch">
+      <span class="big">13.5×</span> 이 작업의 일부 코드는 AI 코딩 에이전트가 썼다. T7·T8 스트레스 duty를 <b>"시간점 개수"로 세서 0.082</b>를 냈는데, ngspice는 스위칭 에지에 점을 몰아 찍는다. 시간 가중으로 바꾸면 <b>0.0061</b>(= 100 µs / 16.7 ms). 에러 없이 그럴듯한 숫자였고 <b>손 검산 한 줄</b>이 잡았다. 같은 코드에 측정값을 회로에 넣지 않는 버그도 있었다.
+    </div>
+    <div class="sowhat">AI 도구는 속도를 주지만 검증 게이트는 사람이 설계해야 한다. 공동연구에서도 같은 원칙으로 간다.</div>
+  </div>
+</section>
+
+<!-- APPENDIX -->
+<section class="slide appx" id="appendix">
+  <div class="in">
+    <p class="kicker">부록 A · 측정 → 추출 → 열화식</p>
+    <h2>1000 h 데이터로 3000 h를 맞힐 때, 외삽은 한쪽으로 틀린다</h2>
+    <div class="two even">
+      <div>
+        <div class="tbl"><table>
+          <tr><th>TFT</th><th class="n">ΔVth 정답 3000 h</th><th class="n">열화식 예측</th><th class="n">차이</th></tr>
+          <tr><td>T1 구동</td><td class="n">0.856 V</td><td class="n">0.843 V</td><td class="n">−13 mV</td></tr>
+          <tr><td>T3 IGZO</td><td class="n">0.154 V</td><td class="n">0.140 V</td><td class="n">−14 mV</td></tr>
+          <tr class="hl"><td>T5 발광</td><td class="n">2.818 V</td><td class="n">2.725 V</td><td class="n">−93 mV</td></tr>
+        </table></div>
+        <ul class="clean" style="margin-top:14px;font-size:15.5px">
+          <li>정답은 로그 법칙(계속 증가), 피팅식은 stretched exponential(포화) → 3000 h에서 일관되게 작게 예측</li>
+          <li>T1 피팅 TAUV = 1371 h vs 정답 τ = 200 h: 1000 h 안에서는 곡선이 겹친다. <b>계수를 물리량으로 읽지 않는다</b></li>
+          <li>log 전류로 피팅, 측정 바닥(15 fA) 아래 점은 상한(censored)으로 유지</li>
+        </ul>
+      </div>
+      <div>
+        <figure class="fig" style="margin-top:14px"><img src="textbook/figs/f04_blind.svg" alt="블라인드 3000 h 검증" loading="lazy"></figure>
+        <figure class="fig"><img src="textbook/figs/f03_censored.svg" alt="측정 바닥 아래 점을 상한으로 처리" loading="lazy"></figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide appx" id="appx-b">
+  <div class="in">
+    <p class="kicker">부록 B · 6T1C 결과와 파이프라인 채점</p>
+    <h2>오차의 주범은 열화식이 아니라 피팅 모델의 정적 형태였다</h2>
+    <div class="two even">
+      <div>
+        <div class="tbl"><table>
+          <tr><th>계조 (Vdata)</th><th class="n">0 h</th><th class="n">1000 h</th><th class="n">3000 h</th><th class="n">유지율</th></tr>
+          <tr><td>고계조 3.0 V</td><td class="n">525.5 nA</td><td class="n">480.0</td><td class="n">463.9</td><td class="n">88.3%</td></tr>
+          <tr><td>중계조 3.6 V</td><td class="n">237.3 nA</td><td class="n">211.4</td><td class="n">202.5</td><td class="n">85.3%</td></tr>
+          <tr><td>저계조 4.1 V</td><td class="n">84.2 nA</td><td class="n">71.1</td><td class="n">66.8</td><td class="n">79.3%</td></tr>
+        </table></div>
+        <div class="tbl"><table>
+          <tr><th>파이프라인 (예측/정답 − 1)</th><th class="n">0 h 고/중/저</th><th class="n">3000 h 블라인드</th></tr>
+          <tr><td>시간별 추출 카드</td><td class="n">−4.4 / −5.8 / −9.0%</td><td class="n">−2.6 / −3.1 / −5.3%</td></tr>
+          <tr class="hl"><td>0 h 카드 + 열화식</td><td class="n">−3.9 / −5.3 / −8.7%</td><td class="n">−1.2 / −1.7 / −4.0%</td></tr>
+        </table></div>
+        <div class="tbl"><table>
+          <tr><th>중계조 T1 게이트</th><th class="n">저장값</th><th class="n">이상값 Vdata − |Vth|</th></tr>
+          <tr><td>0 h</td><td class="n">2.369 V</td><td class="n">2.400 V</td></tr>
+          <tr><td>3000 h</td><td class="n">1.573 V</td><td class="n">1.543 V</td></tr>
+          <tr class="hl"><td>변화</td><td class="n">−0.796 V</td><td class="n">−0.857 V</td></tr>
+        </table></div>
+      </div>
+      <div>
+        <figure class="fig" style="margin-top:14px"><img src="textbook/figs/f05_6t1c.svg" alt="6T1C 화소 회로" loading="lazy"></figure>
+        <figure class="fig"><img src="code/02_pipeline/figs/pipeline_grade.png" alt="파이프라인 채점 그림" loading="lazy"></figure>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="slide appx" id="appx-c">
+  <div class="in">
+    <p class="kicker">부록 C · AI 비교 상세</p>
+    <h2>평균 오차와 꼬리 오차(P95)를 같이 봐야 한다</h2>
     <div class="tbl"><table>
-      <tr><th>방법 (MAPE / P95)</th><th class="num">기본 (학습 범위 안)</th><th class="num">3000 h 부근 (시간 외삽)</th><th class="num">저계조 (전압 외삽)</th></tr>
-      <tr><td>기존 (추출 + SPICE)</td><td class="num">3.6% / 8%</td><td class="num">5.1% / 29%</td><td class="num">6.7% / 11%</td></tr>
-      <tr><td>AI-GBM</td><td class="num">1.8% / 5%</td><td class="num">3.7% / 11%</td><td class="num bad">125.7% / 218%</td></tr>
-      <tr><td>AI-MLP</td><td class="num">7.8% / 19%</td><td class="num">20.1% / 80%</td><td class="num bad">61.3% / 111%</td></tr>
-      <tr class="hl"><td><b>Hybrid</b> (기존 결과의 잔차만 GBM 학습)</td><td class="num good">1.0% / 2%</td><td class="num">4.2% / 27%</td><td class="num good">2.6% / 5%</td></tr>
+      <tr><th>방법 (MAPE / P95)</th><th class="n">학습 범위 안</th><th class="n">3000 h 부근</th><th class="n">저계조</th></tr>
+      <tr><td>기존 (추출 + SPICE)</td><td class="n">3.6% / 8%</td><td class="n">5.1% / 29%</td><td class="n">6.7% / 11%</td></tr>
+      <tr><td>AI-GBM</td><td class="n">1.8% / 5%</td><td class="n">3.7% / 11%</td><td class="n">125.7% / 218%</td></tr>
+      <tr><td>AI-MLP</td><td class="n">7.8% / 19%</td><td class="n">20.1% / 80%</td><td class="n">61.3% / 111%</td></tr>
+      <tr class="hl"><td>Hybrid</td><td class="n">1.0% / 2%</td><td class="n">4.2% / 27%</td><td class="n">2.6% / 5%</td></tr>
     </table></div>
+    <ul class="clean" style="margin-top:14px;font-size:15.5px">
+      <li><b>이 AI는 미래를 예측하지 않는다.</b> 입력은 "그 시점에 잰 곡선"이다. 측정 안 한 미래는 열화식으로 곡선을 먼저 만들어야 하고 오차가 쌓인다</li>
+      <li>GBM의 시간 외삽 3.7%는 화소별 사용량 산포 덕분에 입력 곡선이 이미 본 범위 안에 있었던 결과에 가깝다</li>
+      <li>Hybrid의 꼬리(P95 27%)는 기존 흐름(29%)에서 물려받는다. MLP 결과는 이 설정(2000 표본, 253차원)에 한정</li>
+    </ul>
     <figure class="fig"><img src="code/02_pipeline/figs/ml_compare.png" alt="ML 비교 그림" loading="lazy"></figure>
-    <div class="grid3">
-      <div class="card"><span class="tag">내비게이션</span><h3 style="margin:10px 0 6px">기존 흐름</h3><p style="margin:0">지도(물리)로 계산한다. 어디서든 그럭저럭 맞지만 지도에 없는 골목만큼 늘 조금 틀린다.</p></div>
-      <div class="card"><span class="tag r">동네 택시기사</span><h3 style="margin:10px 0 6px">AI 단독</h3><p style="margin:0">아는 동네에선 빠르다. 처음 가는 동네에선 아는 곳 중 제일 비슷한 데로 간다. 저계조 화소 400개 전부에 약 180–215 nA를 답했다 (정답 50–150 nA).</p></div>
-      <div class="card"><span class="tag g">내비 켠 기사</span><h3 style="margin:10px 0 6px">Hybrid</h3><p style="margin:0">경로는 물리가 정하고 AI는 보정만 한다. 학습 화소 100개일 때 Hybrid 1.9%, GBM 5.0%, 기존 3.6%였다.</p></div>
-    </div>
-    <div class="callout red"><b>해석할 때 반드시 지킬 것</b>
-      <ul class="tight" style="margin:4px 0 0">
-        <li><b>이 AI는 미래를 예측하지 않는다.</b> 입력은 "그 시점에 잰 곡선"이다. 측정 안 한 미래는 열화식으로 곡선을 먼저 만들어야 하고, 그만큼 오차가 쌓인다</li>
-        <li>트리 모델이 학습 범위 밖에서 상수가 되는 건 튜닝 문제가 아니라 <b>구조</b>다</li>
-        <li>Hybrid의 꼬리 오차는 기존 흐름에서 물려받는다 (시간 외삽 P95 29% → 27%)</li>
-        <li>시드 1개, 모집단 1개. 1%p 이내 차이로는 순위를 주장할 수 없다</li>
-      </ul>
-    </div>
   </div>
 </section>
 
-<!-- 7. 8T1C first pass -->
-<section id="t8">
-  <div class="wrap">
-    <p class="eyebrow">07 · 8T1C 1차</p>
-    <h2>T7·T8을 붙였는데 결과가 같다 — 질문이 모델에 없었다</h2>
-    <p class="lede">6T1C에 공개 문헌에서 흔한 두 기능을 <b>예시로</b> 붙였다. 특정 제조사 회로가 아니다. 6T1C 넷리스트 생성 함수를 복사하지 않고 <b>감싸서</b> 붙였기 때문에 6T1C 결과는 바뀌지 않는다.</p>
-    <figure class="fig"><img src="textbook/figs/f11_8t1c_schematic.svg" alt="예시 8T1C 화소 회로도" loading="lazy" style="max-width:820px"><figcaption>회로도의 모든 연결은 넷리스트(<code>pixel.py</code> + <code>pixel_8t1c.py</code>)와 1:1로 대조했다. 주황 = 8T1C에서 추가한 T7(애노드 리셋)·T8(OBS 온바이어스).</figcaption></figure>
-    <div class="grid2">
+<section class="slide appx" id="appx-d">
+  <div class="in">
+    <p class="kicker">부록 D · 8T1C 히스테리시스 상세</p>
+    <h2>첫 프레임에서 벌어지고 2프레임이면 닫힌다 · T7·T8 스트레스는 파형에서 읽는다</h2>
+    <div class="two even">
       <div>
-        <h3>회로는 의도대로 돌았다 (중계조, 0 h)</h3>
+        <figure class="fig" style="margin-top:14px"><img src="code/04_hysteresis_8t1c/figs/f09_frame_response.svg" alt="프레임별 전류 응답" loading="lazy"></figure>
         <div class="tbl"><table>
-          <tr><th>구간</th><th class="num">애노드</th><th class="num">T1 소스</th><th class="num">게이트</th><th class="num">전류</th></tr>
-          <tr><td>초기화</td><td class="num"><b>−3.50 V</b></td><td class="num"><b>5.00 V</b></td><td class="num">−3.50 V</td><td class="num">0 nA</td></tr>
-          <tr><td>기록</td><td class="num">−3.37 V</td><td class="num">3.60 V</td><td class="num">2.52 V</td><td class="num">0 nA</td></tr>
-          <tr><td>발광</td><td class="num">0.33 V</td><td class="num">4.59 V</td><td class="num">2.37 V</td><td class="num">237.5 nA</td></tr>
+          <tr><th>KH (τ 1 ms)</th><th class="n">0</th><th class="n">0.02</th><th class="n">0.05</th><th class="n">0.10</th></tr>
+          <tr><td>6T1C E1</td><td class="n">0.00%</td><td class="n">3.14%</td><td class="n">7.82%</td><td class="n">15.55%</td></tr>
+          <tr><td>8T1C E1</td><td class="n">0.00%</td><td class="n">2.38%</td><td class="n">5.84%</td><td class="n">11.32%</td></tr>
         </table></div>
       </div>
       <div>
-        <h3>그런데 열화 결과는 같았다</h3>
+        <figure class="fig" style="margin-top:14px"><img src="textbook/figs/f10_8t1c_timing.svg" alt="8T1C 블록도와 60 Hz 타이밍" loading="lazy"></figure>
         <div class="tbl"><table>
-          <tr><th>계조</th><th class="num">6T1C 3000 h 유지율</th><th class="num">8T1C</th></tr>
-          <tr><td>고계조</td><td class="num">88.3%</td><td class="num">88.3%</td></tr>
-          <tr><td>중계조</td><td class="num">85.3%</td><td class="num">85.3%</td></tr>
-          <tr><td>저계조</td><td class="num">79.3%</td><td class="num">79.3%</td></tr>
+          <tr><th>T7·T8 스트레스</th><th class="n">가정</th><th class="n">60 Hz 파형 측정</th></tr>
+          <tr><td>duty</td><td class="n">0.012</td><td class="n">0.0061</td></tr>
+          <tr><td>T7 |Vgs|</td><td class="n">10 V</td><td class="n">3.49 V</td></tr>
+          <tr><td>T8 |Vgs|</td><td class="n">10 V</td><td class="n">11.96 V</td></tr>
         </table></div>
-        <p>8T1C에서 한 TFT만 3000 h 열화: T1 −13.71%, T5 −0.76%, T6 −0.24%, T3 −0.20%, <b>T7 −0.00%, T8 −0.00%</b>.</p>
       </div>
     </div>
-    <div class="callout amber"><b>제습기를 샀는데 방에 처음부터 습기가 없었다</b>T7·T8은 OLED 잔류 전하와 TFT 히스테리시스를 잡는 장치다. 그런데 정답 모델에는 <b>히스테리시스가 없고</b>, 지표는 <b>2프레임 정상상태 평균</b>뿐이라 계조 전환 응답을 보지 않는다. 시뮬레이터가 틀린 게 아니라 질문이 모델에 없었다. → 다음 섹션에서 그 질문을 모델에 넣는다.</div>
+    <p class="note">모델: <code>ptft_hyst.va</code> — 내부 노드 <code>mem</code>이 vsg를 τ로 추종, <code>vth += KH·(V(mem) − VREFH)</code>. 72회 시뮬레이션, 결과는 <code>code/04_hysteresis_8t1c/results/</code>.</p>
   </div>
 </section>
 
-<!-- 8. HYSTERESIS -->
-<section id="hyst">
-  <div class="wrap">
-    <p class="eyebrow">08 · 8T1C 2차 — 히스테리시스와 프레임 응답</p>
-    <h2>빠진 현상을 넣자 T8이 일을 했다 — 단, 조건부로</h2>
-    <p class="lede">두 가지를 바꿨다. <b>① TFT 모델에 가역 트랩 상태 하나</b>를 넣고, <b>② 지표를 실타이밍 60 Hz에서 계조 전환 직후 프레임별 전류</b>로 바꿨다.</p>
-    <div class="grid2">
-      <div class="card">
-        <h3 style="margin-top:0">① 1차 트랩 상태 (<code>ptft_hyst.va</code>)</h3>
-<pre><code>electrical d, g, s, mem;          // 내부 노드
-I(mem) &lt;+ V(mem) - vsg;
-I(mem) &lt;+ ddt(TAUH * V(mem));     // mem이 vsg를 시정수 τ로 추종
-vth = (7장 vth) + KH * (V(mem) - VREFH);</code></pre>
-        <ul class="tight">
-          <li><code>KH</code> [V/V] 바이어스 이력이 문턱에 남는 세기 · <code>TAUH</code> [s] 트랩 시정수</li>
-          <li>KH = 0이면 7장 모델과 같아야 한다 → 게이트 G1</li>
-        </ul>
-      </div>
-      <div class="card">
-        <h3 style="margin-top:0">② 프레임 단위 지표</h3>
-        <ul class="tight">
-          <li>저계조(4.1 V) 또는 고계조(3.0 V) 4프레임 → <b>중계조(3.6 V)로 전환</b> → 8프레임 관찰</li>
-          <li><code>E1 = |I₁(저계조 출발) − I₁(고계조 출발)| / I_ss</code> — 같은 중계조인데 직전 화면에 따라 첫 프레임이 다른 정도 (잔상)</li>
-          <li><code>R_ss</code> = 열화 후 정상 전류 / 0 h — 7장 유지율과 같은 뜻</li>
-          <li>비교: 6T1C · 8T1C · <b>T7만 제거</b> · <b>T8만 제거</b> × KH × τ × 열화 × VOBS (72회)</li>
-        </ul>
-      </div>
-    </div>
-
-    <h3>게이트 — 결과보다 먼저 통과</h3>
-    <div class="tbl"><table>
-      <tr><th>게이트</th><th>무엇을</th><th class="num">기준</th><th class="num">결과</th></tr>
-      <tr><td>G1 대조군</td><td>KH = 0에서 6T1C·8T1C 0 h·3000 h 전류가 7장과 같은가</td><td class="num">≤ 1e-4</td><td class="num good">5.9e-6 PASS</td></tr>
-      <tr><td>G2 시정수</td><td>vsg 계단 후 1τ에서 V(mem)</td><td class="num">63.2 ± 2%</td><td class="num good">63.20% PASS</td></tr>
-      <tr><td>G3 시간 간격</td><td>최대 간격 20 µs vs 2 µs에서 I_ss, E1</td><td class="num">0.5%, 5%</td><td class="num good">0.024%, 0.012% PASS</td></tr>
-    </table></div>
-    <p style="color:var(--mute);font-size:14.5px">두 번 실행해 결과 CSV·그림이 바이트 단위로 같음을 확인. 60 Hz 기록 구간은 100 µs뿐이라 G3 없이는 차이가 수치 오차인지 구분할 수 없다.</p>
-
-    <h3>결과 1 · 첫 프레임에서 벌어지고, 2프레임이면 닫힌다</h3>
-    <div class="grid2">
-      <figure class="fig" style="margin-top:0"><img src="code/04_hysteresis_8t1c/figs/f09_frame_response.svg" alt="프레임별 전류 응답" loading="lazy"><figcaption>KH = 0.05 V/V, τ = 1 ms, 0 h, VOBS = 5 V</figcaption></figure>
-      <div>
-        <div class="tbl"><table>
-          <tr><th>회로 · 출발</th><th class="num">프레임 1</th><th class="num">프레임 2</th><th class="num">I_ss</th></tr>
-          <tr><td>6T1C · 저계조에서</td><td class="num">246.92</td><td class="num">255.76</td><td class="num">256.24</td></tr>
-          <tr><td>6T1C · 고계조에서</td><td class="num">266.97</td><td class="num">256.78</td><td class="num">256.24</td></tr>
-          <tr><td>8T1C · 저계조에서</td><td class="num">263.38</td><td class="num">270.24</td><td class="num">270.51</td></tr>
-          <tr><td>8T1C · 고계조에서</td><td class="num">279.17</td><td class="num">270.84</td><td class="num">270.51</td></tr>
-          <tr class="hl"><td><b>E1</b></td><td class="num" colspan="3"><b>6T1C 7.82% → 8T1C 5.84% (−25%)</b></td></tr>
-        </table></div>
-        <p style="font-size:14.5px">단위 nA. KH = 0이면 E1 = 0.001% — 첫 프레임 차이는 전부 트랩 상태에서 왔다.</p>
-      </div>
-    </div>
-
-    <h3>결과 2 · 효과는 전부 T8에서, 크기는 트랩 시정수가 정한다</h3>
-    <figure class="fig"><img src="code/04_hysteresis_8t1c/figs/f09_kh_e1.svg" alt="KH와 트랩 시정수에 따른 E1" loading="lazy"></figure>
-    <div class="grid2">
-      <div class="tbl"><table>
-        <tr><th>τ (KH 0.05)</th><th class="num">6T1C</th><th class="num">8T1C</th><th class="num">−T7</th><th class="num">−T8</th><th class="num">감소</th></tr>
-        <tr class="hl"><td>0.1 ms</td><td class="num">7.62%</td><td class="num"><b>0.93%</b></td><td class="num">0.93%</td><td class="num">7.62%</td><td class="num good">−88%</td></tr>
-        <tr><td>1 ms</td><td class="num">7.82%</td><td class="num">5.84%</td><td class="num">5.84%</td><td class="num">7.82%</td><td class="num">−25%</td></tr>
-        <tr><td>10 ms</td><td class="num">3.69%</td><td class="num">3.55%</td><td class="num">3.56%</td><td class="num">3.69%</td><td class="num">−4%</td></tr>
-      </table></div>
-      <div>
-        <ul class="tight">
-          <li><b>T7을 빼도 8T1C와 같고, T8을 빼면 6T1C와 같다.</b> 이 모델에서 잔상을 줄이는 건 전적으로 T8(OBS)이다</li>
-          <li><b>OBS 펄스는 100 µs.</b> τ가 그와 비슷하면 한 번에 리셋(−88%), 10배면 일부(−25%), 100배면 거의 못 지움(−4%)</li>
-          <li>VOBS 4 / 5 / 6 V → E1 5.86 / 5.84 / 5.81%. 전압보다 <b>리셋 시간 대비 τ</b>가 지배</li>
-          <li>→ OBS 효과는 회로만으로 못 정한다. <b>소자 트랩 시정수 측정이 먼저</b>다</li>
-        </ul>
-      </div>
-    </div>
-
-    <h3>결과 3 · 수명에는 이득 없음, 가속 타이밍은 잔상을 숨김</h3>
-    <div class="grid3">
-      <div class="card">
-        <span class="tag">R_ss · KH 0.05, τ 1 ms</span>
-        <div class="tbl" style="margin-bottom:0"><table style="min-width:0">
-          <tr><th>열화</th><th class="num">6T1C</th><th class="num">8T1C</th></tr>
-          <tr><td>1000 h</td><td class="num">88.99%</td><td class="num">88.62%</td></tr>
-          <tr><td>3000 h</td><td class="num">85.22%</td><td class="num">84.73%</td></tr>
-        </table></div>
-        <p style="margin:10px 0 0;font-size:14.5px">OBS는 잔상용이지 수명용이 아니다. 0.5%p 차이는 시드 1개라 "나빠진다"고 주장할 근거도 약하다.</p>
-      </div>
-      <div class="card">
-        <span class="tag">정상 전류 오프셋</span>
-        <p style="margin:10px 0 0;font-size:14.5px">0 h I_ss가 6T1C 256.2 → 8T1C 270.5 nA (<b>+5.6%</b>, KH = 0이면 둘 다 258.5). OBS가 기록 직전 트랩 상태를 바꿔 <b>보상 회로가 저장하는 |Vth|도 바뀐다</b> — 실제 패널이면 감마 보정값이 OBS 조건에 따라 달라진다.</p>
-      </div>
-      <div class="card">
-        <span class="tag r">가속 1 ms 프레임의 착시</span>
-        <p style="margin:10px 0 0;font-size:14.5px">같은 KH·τ에서 6T1C E1이 실타이밍 <b>7.82%</b> → 가속 <b>2.13%</b>. 프레임 길이 ≈ τ라 한 프레임 안에서 평균돼 잔상이 <b>약 1/4로 보였다.</b> 경향은 가속으로, 결론은 실타이밍으로.</p>
-      </div>
-    </div>
-
-    <div class="grid2">
-      <div class="callout green"><b>T7·T8 스트레스는 파형에서 읽어야 한다</b>7장 가정: duty 0.012, |Vgs| 10 V. 60 Hz 파형에서 측정: duty <b>0.0061</b>, T7 |Vgs| <b>3.49 V</b>, T8 <b>11.96 V</b>. T7 스트레스는 가정의 1/16이었다.</div>
-      <div class="callout red"><b>AI 에이전트가 만든 함정</b>첫 코드는 duty를 "S1&lt;0인 시간점 개수 / 전체 점 개수"로 셌다 → <b>0.082</b>. ngspice는 에지 근처에 점을 몰아 찍으므로 13.5배 과대였다. 측정값을 회로 카드에 안 넣는 버그도 있었다. 둘 다 에러 없이 그럴듯한 숫자를 냈고, <b>100 µs / 16.667 ms 손 검산</b>으로 잡았다.</div>
-    </div>
-  </div>
-</section>
-
-<!-- 9. COLLAB -->
-<section id="collab">
-  <div class="wrap">
-    <p class="eyebrow">09 · 공동연구로 옮기기</p>
-    <h2>가장 먼저 깨지는 것은 코드가 아니라 정의다</h2>
-    <p class="lede">Vth 추출 규칙, 측정 지연, TFT 번호, 전류를 재는 노드가 팀마다 다르면 같은 숫자가 다른 뜻이 된다. 그래서 첫 2주는 시뮬레이션보다 <b>정의 대응표와 기준선 재현</b>에 쓴다.</p>
-    <div class="grid2">
-      <div>
-        <h3 style="margin-top:0">측정팀에 확인할 핵심</h3>
-        <ul class="tight">
-          <li>LTPS·산화물 각각의 <b>stress / read / recovery 순서와 시간</b></li>
-          <li>stress를 멈추고 잰다면 <b>멈춤 → 측정 지연</b>은 몇 초인가 — 그보다 짧은 τ의 가역 성분은 데이터에 남지 않는다 (8장 결과가 τ에 좌우됨)</li>
-          <li>output I–V도 시간별로 재는가 (드레인 의존성은 transfer만으로 못 뽑는다)</li>
-          <li>소자 간 산포와 반복 측정 오차를 어떻게 나누는가</li>
-          <li>Vth 추출 규칙·전류 창, 측정 바닥 전류</li>
-          <li>가역 회복과 비가역 이동을 나눈 실험이 있는가</li>
-        </ul>
-        <h3>회로·모델팀에 확인할 핵심</h3>
-        <ul class="tight">
-          <li>시뮬레이터와 정확한 버전, 사용 compact model</li>
-          <li>모델카드 추출의 목적함수 (선형? log? 가중치?)</li>
-          <li>열화 전후 카드를 따로 피팅하는가, 시간 함수로 잇는가</li>
-          <li>화소 전류를 어느 노드에서, 어느 구간 평균으로 정의하는가</li>
-          <li>TFT 하나씩만 바꾸는 민감도·제거 해석이 가능한가</li>
-          <li>모델 코드와 테스트벤치의 반출 범위</li>
-        </ul>
-      </div>
-      <div>
-        <div class="card">
-          <h3 style="margin-top:0">첫 미팅에서 받을 최소 파일</h3>
-          <ol style="margin:0;padding-left:20px">
-            <li>정상 동작하는 최소 모델 + 배포 조건</li>
-            <li>모델카드 예제 1개</li>
-            <li>단일 TFT transfer / output 테스트벤치</li>
-            <li>화소 넷리스트 또는 반출 범위 안의 토폴로지 설명</li>
-            <li>타이밍 파형 정의</li>
-            <li>시뮬레이터 실행 명령</li>
-            <li><b>기대 출력 1개</b> — 없으면 우리 쪽 실행이 맞는지 판정할 방법이 없다</li>
-          </ol>
-        </div>
-        <div class="callout green"><b>히스테리시스 파라미터를 측정으로 정하는 법</b>기준 read → stress 계단(Δ) → 지연 t<sub>d</sub> 뒤 빠른 read → recovery 추적. 돌아오는 부분 = 가역(KH ≈ 진폭/Δ, 회복 곡선에서 τ), 남는 부분 = 비가역(열화식으로). t<sub>d</sub> &gt; τ이면 KH를 과소추정하므로 t<sub>d</sub>를 바꿔 재고 0으로 외삽한다.</div>
-      </div>
-    </div>
-    <h3>단계와 합격 기준</h3>
-    <div class="tbl"><table>
-      <tr><th>단계</th><th>기간(가늠)</th><th>할 일</th><th>합격 기준</th></tr>
-      <tr><td>0. 정의·기준선</td><td>2주</td><td>기능 대응표, 프로토콜·스키마 통일, 기존 모델 재현</td><td>기대 출력 1개를 양쪽 환경에서 재현</td></tr>
-      <tr><td>1. 단일 TFT</td><td>1–2개월</td><td>구동 TFT 초기·열화 I–V 피팅, 시간·온도 열화식, 가역 성분 τ</td><td>같은 바이어스에서 초기·열화 I–V 재현</td></tr>
-      <tr><td>2. 회로 민감도</td><td>2–3개월</td><td>TFT별 민감도·제거 행렬, 동시 열화, 프레임 응답</td><td>전류 변화 <b>방향</b> 재현 → <b>크기</b> 재현</td></tr>
-      <tr><td>3. Hybrid</td><td>4–6개월</td><td>물리 잔차 ML, 새 소자·미래 시간 검증</td><td>학습 안 한 소자·후기 시간 오차 범위, 90% 예측구간 포함률</td></tr>
-    </table></div>
-    <p style="color:var(--mute);font-size:14.5px">KPI 숫자 문턱은 측정 바닥 노이즈와 반복성을 확인한 뒤 같이 정한다. 먼저 숫자를 정하면 노이즈보다 작은 목표를 약속하게 된다.</p>
-  </div>
-</section>
-
-<!-- 10. LIMITS -->
-<section id="limits">
-  <div class="wrap">
-    <p class="eyebrow">10 · 한계와 경계</p>
-    <h2>이 자료가 증명하지 않는 것</h2>
-    <div class="grid2">
-      <div class="card">
-        <h3 style="margin-top:0">데이터·모델 한계</h3>
-        <ul class="tight">
-          <li><b>전부 합성 데이터</b>, 난수 시드 1개, 모집단 1개. "항상 낫다"의 증거가 아니라 실험 설계 교보재</li>
-          <li>6T1C는 교과서형 공개 토폴로지, 8T1C는 확장 연습용 예시 하나</li>
-          <li>히스테리시스는 트랩 1개·충방전 시정수 동일·모든 TFT에 같은 KH. τ ≤ 10 ms만 확인</li>
-          <li>TFT별 스트레스 이력 고정 (OBS가 T1 열화 속도에 주는 되먹임 없음)</li>
-          <li>OLED는 다이오드 + 0.3 pF. 효율 열화·휘도 수명·온도 가속은 범위 밖</li>
-        </ul>
-      </div>
-      <div class="card">
-        <h3 style="margin-top:0">공개 범위</h3>
-        <ul class="tight">
-          <li>이 저장소: 합성 예제 코드·데이터·교재만</li>
-          <li>실측 I–V, 화소 전류, 실제 넷리스트·타이밍, 연구실 compact model 코드는 <b>공개 저장소에 올리지 않는다</b></li>
-          <li>비밀유지 계약은 공유의 전제일 뿐 공개 허가가 아니다</li>
-          <li>코드는 공개 가능한 형태로, 데이터 경로는 설정 파일로 분리</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- 11. BOOK -->
-<section id="book">
-  <div class="wrap">
-    <p class="eyebrow">11 · 교재와 재현</p>
-    <h2>석·박사 과정용 교재 11편</h2>
-    <p class="lede">소자·회로·ML 중 하나는 익숙하고 나머지는 처음인 사람을 위해 썼다. 새 개념마다 일상 비유 하나와 <b>"그 비유가 틀리는 지점"</b>을 같이 적었다.</p>
+<section class="slide appx" id="appx-e">
+  <div class="in">
+    <p class="kicker">부록 E · 교재와 재현</p>
+    <h2>석·박사 과정용 교재 11편 — 비유 하나와 그 비유가 틀리는 지점을 같이 적었다</h2>
     <div class="chap" id="chap"></div>
-    <h3>직접 돌려보기</h3>
 <pre><code>git clone https://github.com/waterfirst/tft_ngspice_velilog-a.git
 cd tft_ngspice_velilog-a/code
-python3 -m venv .venv &amp;&amp; . .venv/bin/activate
-pip install -r requirements.txt
-# ngspice(39 이상)와 openvaf가 PATH에 있어야 한다 → 1장
-bash run_all.sh</code></pre>
+python3 -m venv .venv &amp;&amp; . .venv/bin/activate &amp;&amp; pip install -r requirements.txt
+bash run_all.sh      # ngspice(39+)와 openvaf가 PATH에 있어야 한다 → 1장</code></pre>
+    <p class="note">합성 데이터 교보재 · 특정 제조사 회로·실측 데이터 아님 · 코드와 본문 MIT · <a href="https://github.com/waterfirst/tft_ngspice_velilog-a">github.com/waterfirst/tft_ngspice_velilog-a</a></p>
   </div>
 </section>
-
-<footer>
-  합성 데이터 교보재 · 특정 제조사 회로·실측 데이터 아님 · 코드와 본문 MIT License<br>
-  <a href="https://github.com/waterfirst/tft_ngspice_velilog-a">github.com/waterfirst/tft_ngspice_velilog-a</a>
-</footer>
 
 <script>
 (function(){
   var BASE = 'https://github.com/waterfirst/tft_ngspice_velilog-a/blob/main/textbook/';
-  var CH = [
-    ['0','ch00_big_picture.md','큰 그림','왜 TFT 하나의 열화가 화소 전류 문제인가'],
-    ['1','ch01_setup.md','설치와 연기 시험','내 컴퓨터에서 Verilog-A가 도는가'],
-    ['2','ch02_verilog_a_tft.md','Verilog-A로 늙는 TFT 만들기','시간을 파라미터로 넣는다는 게 무슨 뜻인가'],
-    ['3','ch03_measure_extract.md','측정값에서 모델카드 뽑기','정답을 모를 때 어떻게 채점하나'],
-    ['4','ch04_aging_law.md','열화식과 블라인드 예측','1000시간으로 3000시간을 맞힐 수 있나'],
-    ['5','ch05_pixel_6t1c.md','6T1C 화소 회로와 애노드 전류','어느 TFT가 전류를 가장 많이 깎나'],
-    ['6','ch06_ml_vs_physics.md','기존 흐름 vs AI vs Hybrid','AI는 어디서 이기고 어디서 무너지나'],
-    ['7','ch07_real_data_8t1c.md','실측 데이터와 8T1C로 옮기기','내 데이터·내 회로에 적용하려면'],
-    ['8','ch08_ai_agents.md','AI 코딩 에이전트와 같이 만들기','에이전트에게 맡길 때 무엇을 검증하나'],
-    ['9','ch09_hysteresis_8t1c.md','8T1C 히스테리시스와 프레임 응답','T8이 막으려는 현상을 넣으면 달라지나','new'],
-    ['10','ch10_collab_snu.md','공동연구로 옮기기','측정팀·회로팀과 무엇을 맞추나','new'],
-    ['부록','appendix.md','함정 모음·용어·HSPICE 차이','막혔을 때 먼저 볼 곳']
-  ];
+  var CH = [['0','ch00_big_picture.md','큰 그림'],['1','ch01_setup.md','설치와 연기 시험'],['2','ch02_verilog_a_tft.md','Verilog-A로 늙는 TFT'],
+    ['3','ch03_measure_extract.md','측정값에서 모델카드 뽑기'],['4','ch04_aging_law.md','열화식과 블라인드 예측'],['5','ch05_pixel_6t1c.md','6T1C 화소와 애노드 전류'],
+    ['6','ch06_ml_vs_physics.md','기존 vs AI vs Hybrid'],['7','ch07_real_data_8t1c.md','실측 데이터와 8T1C'],['8','ch08_ai_agents.md','AI 코딩 에이전트와 검증'],
+    ['9','ch09_hysteresis_8t1c.md','8T1C 히스테리시스와 프레임 응답'],['10','ch10_collab_snu.md','공동연구로 옮기기'],['부록','appendix.md','함정·용어·HSPICE 차이']];
   var box = document.getElementById('chap');
   CH.forEach(function(c){
-    var a = document.createElement('a');
-    a.href = BASE + c[1]; a.target = '_blank'; a.rel = 'noopener';
-    if (c[4]) a.className = 'new';
-    a.innerHTML = '<div class="no">' + (c[0] === '부록' ? '부록' : c[0] + '장') + (c[4] ? ' · NEW' : '') + '</div>' +
-                  '<div class="ti">' + c[2] + '</div><div class="q">' + c[3] + '</div>';
+    var a = document.createElement('a'); a.href = BASE + c[1]; a.target = '_blank'; a.rel = 'noopener';
+    a.innerHTML = '<div class="no">' + (c[0] === '부록' ? '부록' : c[0] + '장') + '</div><div class="ti">' + c[2] + '</div>';
     box.appendChild(a);
   });
 
-  var secs = Array.prototype.slice.call(document.querySelectorAll('section'));
-  var links = document.querySelectorAll('#nav a');
+  var slides = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var main = slides.filter(function(s){ return !s.classList.contains('appx'); }).length;
+  var cnt = document.getElementById('cnt'), bar = document.getElementById('progress');
   function current(){
-    var y = window.scrollY + 90, idx = 0;
-    secs.forEach(function(s,i){ if (s.offsetTop <= y) idx = i; });
+    var y = window.scrollY + window.innerHeight * 0.35, idx = 0;
+    slides.forEach(function(s,i){ if (s.offsetTop <= y) idx = i; });
     return idx;
   }
+  function update(){
+    var i = current();
+    cnt.textContent = i < main ? (i + 1) + ' / ' + main : '부록 ' + String.fromCharCode(65 + i - main);
+    bar.style.width = ((i + 1) / slides.length * 100) + '%';
+  }
   document.addEventListener('keydown', function(e){
-    if (e.target.closest && e.target.closest('input,textarea')) return;
     var k = e.key, d = 0;
-    if (k === 'ArrowRight' || k === 'PageDown') d = 1;
-    else if (k === 'ArrowLeft' || k === 'PageUp') d = -1;
+    if (k === 'ArrowRight' || k === 'PageDown' || k === ' ' || k === 'ArrowDown') d = 1;
+    else if (k === 'ArrowLeft' || k === 'PageUp' || k === 'ArrowUp') d = -1;
+    else if (k === 'Home') { e.preventDefault(); slides[0].scrollIntoView({behavior:'smooth'}); return; }
     else return;
     e.preventDefault();
-    var n = Math.max(0, Math.min(secs.length - 1, current() + d));
-    secs[n].scrollIntoView({behavior:'smooth'});
+    var n = Math.max(0, Math.min(slides.length - 1, current() + d));
+    slides[n].scrollIntoView({behavior:'smooth'});
   });
-  function mark(){
-    var id = secs[current()].id;
-    links.forEach(function(a){
-      var on = a.getAttribute('href') === '#' + id;
-      a.classList.toggle('on', on);
-      if (on) a.parentNode.scrollLeft = a.offsetLeft - 40;
-    });
-  }
-  window.addEventListener('scroll', function(){ window.requestAnimationFrame(mark); }, {passive:true});
-  mark();
+  window.addEventListener('scroll', function(){ window.requestAnimationFrame(update); }, {passive:true});
+  update();
 })();
 </script>
 </body>
