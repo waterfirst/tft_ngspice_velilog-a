@@ -5,3 +5,4 @@ runs/
 .venv/
 code/01_tft_aging/*.txt
 code/01_tft_aging/pixel_vdata_*
+code/04_hysteresis_8t1c/results/runtime.txt

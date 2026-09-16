@@ -1,0 +1,47 @@
+// Synthetic teaching model: ptft_true plus one first-order trap-memory state.
+// For LTPS PMOS, larger past vsg raises |Vth|, matching the NBTS direction.
+`include "constants.vams"
+`include "disciplines.vams"
+
+module ptft_hyst(d, g, s);
+  inout d, g, s;
+  electrical d, g, s, mem;
+  parameter real W = 4e-6 from (0:inf);
+  parameter real L = 4e-6 from (0:inf);
+  parameter real CI = 3.45e-4 from (0:inf);
+  parameter real VT0 = 1.2;
+  parameter real U0 = 80 from (0:inf);
+  parameter real GAMMA = 0.15 from [0:1);
+  parameter real SS = 0.3 from (0:inf);
+  parameter real LAMBDA = 0.02 from [0:inf);
+  parameter real GOFF = 1e-14 from [0:inf);
+  parameter real POL = 1.0 from [-1:1];
+  parameter real SIGMA = 0.02 from [0:inf);
+  parameter real THETA = 0.05 from [0:inf);
+  parameter real TSTRESS = 0 from [0:inf);
+  parameter real AVT = 0;  parameter real TAUV = 200 from (0:inf); parameter real BETAV = 0.5 from (0:inf);
+  parameter real AMU = 0;  parameter real TAUM = 800 from (0:inf);
+  parameter real KH = 0; parameter real TAUH = 1e-3 from (0:inf); parameter real VREFH = 0;
+  parameter real PROBE = 0 from [0:inf); // diagnostic transconductance: |Igate|/PROBE = V(mem)
+
+  real vsg, vsd, sgn, vt, n, vth, mu, x, veff, vsde, id;
+  analog begin
+    if (POL * V(s, d) >= 0) begin sgn = 1.0;  vsd = POL * V(s, d); vsg = POL * V(s, g); end
+    else                    begin sgn = -1.0; vsd = POL * V(d, s); vsg = POL * V(d, g); end
+    I(mem) <+ V(mem) - vsg;
+    I(mem) <+ ddt(TAUH * V(mem));
+    vt  = $vt(300.15);
+    n   = SS / (vt * ln(10.0));
+    vth = VT0 + AVT * ln(1.0 + pow(TSTRESS / TAUV, BETAV)) - SIGMA * vsd
+           + KH * (V(mem) - VREFH);
+    x   = (vsg - vth) / (n * vt);
+    if (x > 30.0) veff = vsg - vth; else veff = n * vt * ln(1.0 + exp(x));
+    mu   = U0 * 1e-4 * (1.0 - AMU * (1.0 - exp(-TSTRESS / TAUM))) * pow(veff, GAMMA) / (1.0 + THETA * veff);
+    vsde = vsd / pow(1.0 + pow(vsd / (veff + 1e-12), 2.5), 0.4);
+    id   = CI * W / L * mu * (veff * vsde - 0.5 * vsde * vsde) * (1.0 + LAMBDA * vsd) + GOFF * vsd * (1.0 + 0.1 * vsd);
+    I(s, d) <+ POL * sgn * id;
+    I(g, s) <+ 0.5 * CI * W * L * ddt(V(g, s));
+    I(g, d) <+ 0.5 * CI * W * L * ddt(V(g, d));
+    I(g, s) <+ PROBE * V(mem);
+  end
+endmodule

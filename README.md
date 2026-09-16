@@ -30,6 +30,8 @@ TFT 한 개의 I–V를 시간별로 재서 **모델 파라미터 → 열화식 
 | 6 | [기존 흐름 vs AI vs Hybrid](textbook/ch06_ml_vs_physics.md) | AI는 어디서 이기고 어디서 무너지나 | 7단계 |
 | 7 | [실측 데이터와 8T1C로 옮기기](textbook/ch07_real_data_8t1c.md) | 내 데이터·내 회로에 적용하려면 무엇을 바꾸나 | `code/03_extension_8t1c` |
 | 8 | [AI 코딩 에이전트와 같이 만들기](textbook/ch08_ai_agents.md) | AI에게 시뮬레이션 코드를 맡길 때 무엇을 검증하나 | — |
+| 9 | [8T1C 히스테리시스와 프레임 응답](textbook/ch09_hysteresis_8t1c.md) | T8이 막으려는 현상을 넣으면 달라지나 | `code/04_hysteresis_8t1c` |
+| 10 | [공동연구로 옮기기](textbook/ch10_collab_snu.md) | 측정팀·회로팀과 무엇을 맞추나 | — |
 | 부록 | [함정 모음·용어·HSPICE 차이](textbook/appendix.md) | 막혔을 때 먼저 볼 곳 | — |
 
 ## 빠르게 돌려보기
@@ -53,6 +55,7 @@ code/
   01_tft_aging/       2장  늙는 n형 TFT + 교과서 2T1C
   02_pipeline/        3–6장 6T1C LTPO 파이프라인 (측정→추출→열화식→화소→채점→ML)
   03_extension_8t1c/  7장  T7·T8을 붙인 8T1C 확장 연습
+  04_hysteresis_8t1c/ 9장  트랩 상태 모델 + 60 Hz 프레임 응답 (6T1C vs 8T1C)
 textbook/             본문 (Markdown) + figs/ (SVG)
 ```
 

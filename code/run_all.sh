@@ -17,3 +17,4 @@ echo "== ch04 aging";   $PY aging.py | tail -7
 echo "== ch05 pixels";  $PY run_pixels.py && $PY grade.py
 echo "== ch06 ML";      $PY ml_compare.py && $PY ml_grade.py
 echo "== ch07 8T1C";    (cd ../03_extension_8t1c && $PY pixel_8t1c.py)
+echo "== ch09 hysteresis"; (cd ../04_hysteresis_8t1c && $PY draw_schematic.py >/dev/null && $PY run_hysteresis.py | tail -1)
