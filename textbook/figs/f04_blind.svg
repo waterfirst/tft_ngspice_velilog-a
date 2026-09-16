@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 260" font-family="'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif">
+  <rect width="820" height="260" rx="14" fill="#ffffff"/>
+  <text x="24" y="36" font-size="20" font-weight="700" fill="#0f172a">피팅에 쓴 시간과 숨겨둔 시간</text>
+  <rect x="640" y="60" width="150" height="130" rx="8" fill="#fff7ed"/>
+  <text x="715" y="84" font-size="14" fill="#ea580c" text-anchor="middle" font-weight="700">블라인드</text>
+  <line x1="40" y1="150" x2="790" y2="150" stroke="#94a3b8" stroke-width="2"/>
+  <g font-size="15" text-anchor="middle" fill="#0f172a">
+    <circle cx="70" cy="150" r="9" fill="#2563eb"/><text x="70" y="182">0</text>
+    <circle cx="250" cy="150" r="9" fill="#2563eb"/><text x="250" y="182">10</text>
+    <circle cx="336" cy="150" r="9" fill="#2563eb"/><text x="336" y="182">30</text>
+    <circle cx="430" cy="150" r="9" fill="#2563eb"/><text x="430" y="182">100</text>
+    <circle cx="516" cy="150" r="9" fill="#2563eb"/><text x="516" y="182">300</text>
+    <circle cx="610" cy="150" r="9" fill="#2563eb"/><text x="610" y="182">1000</text>
+    <circle cx="715" cy="150" r="11" fill="#ea580c"/><text x="715" y="182">3000 h</text>
+  </g>
+  <path d="M70,132 C200,128 450,118 610,104" fill="none" stroke="#2563eb" stroke-width="3"/>
+  <path d="M610,104 C650,100 690,96 715,94" fill="none" stroke="#2563eb" stroke-width="3" stroke-dasharray="7 6"/>
+  <text x="300" y="110" font-size="15" fill="#2563eb" font-weight="700">열화식 피팅 (≤1000 h)</text>
+  <text x="24" y="232" font-size="14" fill="#475569">시간축은 로그. 3000 h 데이터는 한 번도 피팅에 안 쓰고, 외삽 예측을 채점하는 데만 쓴다.</text>
+</svg>

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 400" font-family="'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif">
+  <rect width="820" height="400" rx="14" fill="#ffffff"/>
+  <text x="24" y="36" font-size="20" font-weight="700" fill="#0f172a">학습한 땅과 처음 가보는 땅</text>
+  <line x1="100" y1="330" x2="780" y2="330" stroke="#94a3b8" stroke-width="2"/>
+  <line x1="100" y1="60" x2="100" y2="330" stroke="#94a3b8" stroke-width="2"/>
+  <text x="440" y="366" font-size="15" fill="#475569" text-anchor="middle">Vdata (V) → 클수록 전류 작음 = 저계조</text>
+  <text x="36" y="200" font-size="15" fill="#475569" text-anchor="middle" transform="rotate(-90 36 200)">스트레스 시간 (로그)</text>
+  <g font-size="14" fill="#475569" text-anchor="middle"><text x="144" y="350">2.9</text><text x="496" y="350">3.7</text><text x="584" y="350">3.9</text><text x="716" y="350">4.2</text></g>
+  <g font-size="14" fill="#475569" text-anchor="end"><text x="92" y="325">0 h</text><text x="92" y="165">1000 h</text><text x="92" y="100">2000–4000 h</text></g>
+
+  <rect x="144" y="160" width="352" height="168" rx="6" fill="#dbeafe" stroke="#2563eb" stroke-width="2.5"/>
+  <text x="320" y="236" font-size="17" font-weight="700" fill="#1e3a8a" text-anchor="middle">학습 2000화소</text>
+  <text x="320" y="260" font-size="14" fill="#1e3a8a" text-anchor="middle">+ 같은 영역 시험 500</text>
+
+  <rect x="144" y="76" width="352" height="46" rx="6" fill="#ffedd5" stroke="#ea580c" stroke-width="2" stroke-dasharray="7 5"/>
+  <text x="320" y="105" font-size="15" font-weight="700" fill="#9a3412" text-anchor="middle">시간 외삽 400</text>
+
+  <rect x="584" y="160" width="132" height="168" rx="6" fill="#ffedd5" stroke="#ea580c" stroke-width="2" stroke-dasharray="7 5"/>
+  <text x="650" y="236" font-size="15" font-weight="700" fill="#9a3412" text-anchor="middle">전압 외삽</text>
+  <text x="650" y="258" font-size="15" font-weight="700" fill="#9a3412" text-anchor="middle">400</text>
+</svg>

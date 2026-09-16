@@ -1,0 +1,23 @@
+* Transfer curves (Vds = 10 V) after 0 / 10 / 100 / 1000 h stress
+.model t0000 tft_aging TSTRESS=0
+.model t0010 tft_aging TSTRESS=10
+.model t0100 tft_aging TSTRESS=100
+.model t1000 tft_aging TSTRESS=1000
+Vg g 0 0
+Vd1 d1 0 10
+Vd2 d2 0 10
+Vd3 d3 0 10
+Vd4 d4 0 10
+N1 d1 g 0 t0000
+N2 d2 g 0 t0010
+N3 d3 g 0 t0100
+N4 d4 g 0 t1000
+.control
+pre_osdi tft_aging.osdi
+dc Vg -5 15 0.05
+set wr_singlescale
+set wr_vecnames
+* note: space-separated '-i(a) -i(b)' is parsed as one subtraction; write raw i() and negate later
+wrdata transfer.txt i(Vd1) i(Vd2) i(Vd3) i(Vd4)
+.endc
+.end

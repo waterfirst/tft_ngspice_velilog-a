@@ -1,0 +1,43 @@
+* 2T1C pixel (textbook, uncompensated): aged DRIVE TFT -> OLED current
+* switch TFT is kept fresh so only the drive TFT aging is isolated
+.model swm tft_aging TSTRESS=0 W=10e-6 L=10e-6
+.model drv0000 tft_aging TSTRESS=0 W=20e-6 L=10e-6
+.model drv0010 tft_aging TSTRESS=10 W=20e-6 L=10e-6
+.model drv0100 tft_aging TSTRESS=100 W=20e-6 L=10e-6
+.model drv1000 tft_aging TSTRESS=1000 W=20e-6 L=10e-6
+.model oled D(IS=2e-26 N=4 RS=2k CJO=50p)
+VDD vdd 0 15
+VDATA data 0 8
+* scan: write window 1ms..2ms, then hold
+VSCAN scan 0 PULSE(-5 15 1m 10u 10u 1m 100m)
+Nsw0000 data scan g0000 swm
+Ndr0000 vdd g0000 a0000 drv0000
+Cst0000 g0000 a0000 0.5p
+Vs0000 a0000 o0000 0
+D0000 o0000 0 oled
+Nsw0010 data scan g0010 swm
+Ndr0010 vdd g0010 a0010 drv0010
+Cst0010 g0010 a0010 0.5p
+Vs0010 a0010 o0010 0
+D0010 o0010 0 oled
+Nsw0100 data scan g0100 swm
+Ndr0100 vdd g0100 a0100 drv0100
+Cst0100 g0100 a0100 0.5p
+Vs0100 a0100 o0100 0
+D0100 o0100 0 oled
+Nsw1000 data scan g1000 swm
+Ndr1000 vdd g1000 a1000 drv1000
+Cst1000 g1000 a1000 0.5p
+Vs1000 a1000 o1000 0
+D1000 o1000 0 oled
+.control
+pre_osdi tft_aging.osdi
+set wr_singlescale
+set wr_vecnames
+foreach vd 8 11 14
+  alter VDATA dc = $vd
+  tran 10u 20m
+  wrdata pixel_vdata_$vd i(Vs0000) i(Vs0010) i(Vs0100) i(Vs1000)
+end
+.endc
+.end

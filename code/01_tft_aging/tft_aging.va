@@ -1,0 +1,61 @@
+// Learning model: n-type oxide-like TFT with stress-time dependent Vth shift.
+// Not a production compact model. Parameters are textbook-scale, not measured.
+`include "constants.vams"
+`include "disciplines.vams"
+
+module tft_aging(d, g, s);
+  inout d, g, s;
+  electrical d, g, s;
+
+  // geometry & mobility
+  parameter real W      = 20e-6  from (0:inf);
+  parameter real L      = 10e-6  from (0:inf);
+  parameter real MU     = 10e-4  from (0:inf);  // m^2/Vs (= 10 cm^2/Vs)
+  parameter real CI     = 3.45e-4 from (0:inf); // F/m^2 (~100 nm SiO2)
+  parameter real VTH0   = 1.0;
+  parameter real SS     = 0.25   from (0:inf);  // V/decade
+  parameter real LAMBDA = 0.01   from [0:inf);
+  parameter real IOFF   = 1e-13  from [0:inf);  // leakage floor
+
+  // aging: stretched exponential  dVth = DVMAX * (1 - exp(-(t/TAU)^BETA))
+  parameter real TSTRESS = 0     from [0:inf);  // stress time [h]
+  parameter real DVMAX   = 3.0;
+  parameter real TAU     = 500   from (0:inf);  // [h]
+  parameter real BETA    = 0.4   from (0:1];
+
+  real vgs, vds, sgn, vt, n, vth, dvth, x, veff, vdse, k, id;
+
+  analog begin
+    // source/drain symmetry: current always computed for vds >= 0
+    if (V(d, s) >= 0) begin
+      sgn = 1.0;  vds = V(d, s);  vgs = V(g, s);
+    end else begin
+      sgn = -1.0; vds = V(s, d);  vgs = V(g, d);
+    end
+
+    vt   = $vt(300.15);
+    n    = SS / (vt * ln(10.0));
+    dvth = DVMAX * (1.0 - exp(-pow(TSTRESS / TAU, BETA)));
+    vth  = VTH0 + dvth;
+
+    // smooth effective overdrive: subthreshold exponential -> above-threshold linear
+    // softplus written to stay linear at large overdrive:
+    // ln(1+limexp(x)) flattens once limexp switches to linear growth (x > ~80),
+    // which clamped veff near 8.7 V and produced a false current plateau.
+    x = (vgs - vth) / (n * vt);
+    if (x > 30.0)
+      veff = vgs - vth;
+    else
+      veff = n * vt * ln(1.0 + exp(x));
+    // smooth transition between linear and saturation regions
+    vdse = vds / pow(1.0 + pow(vds / (veff + 1e-12), 4.0), 0.25);
+
+    k  = MU * CI * W / L;
+    id = k * (veff * vdse - 0.5 * vdse * vdse) * (1.0 + LAMBDA * vds) + IOFF * vds;
+
+    I(d, s) <+ sgn * id;
+    // intrinsic gate capacitances for transient runs
+    I(g, s) <+ 0.5 * CI * W * L * ddt(V(g, s));
+    I(g, d) <+ 0.5 * CI * W * L * ddt(V(g, d));
+  end
+endmodule

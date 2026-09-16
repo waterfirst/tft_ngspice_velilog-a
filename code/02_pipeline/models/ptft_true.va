@@ -1,0 +1,42 @@
+// TRUTH model: generates synthetic "measurements". Deliberately richer than ptft_fit:
+//  - drain-induced |Vth| lowering (SIGMA), mobility degradation (THETA), softer lin/sat transition
+//  - aging law is LOGARITHMIC in time (fit model assumes stretched exponential)
+`include "constants.vams"
+`include "disciplines.vams"
+
+module ptft_true(d, g, s);
+  inout d, g, s;
+  electrical d, g, s;
+  parameter real W = 4e-6 from (0:inf);
+  parameter real L = 4e-6 from (0:inf);
+  parameter real CI = 3.45e-4 from (0:inf);
+  parameter real VT0 = 1.2;
+  parameter real U0 = 80 from (0:inf);
+  parameter real GAMMA = 0.15 from [0:1);
+  parameter real SS = 0.3 from (0:inf);
+  parameter real LAMBDA = 0.02 from [0:inf);
+  parameter real GOFF = 1e-14 from [0:inf);
+  parameter real POL = 1.0 from [-1:1];         // +1 PMOS (LTPS), -1 NMOS (IGZO)
+  parameter real SIGMA = 0.02 from [0:inf);     // |Vth| lowering per volt of Vsd
+  parameter real THETA = 0.05 from [0:inf);     // mobility degradation 1/V
+  parameter real TSTRESS = 0 from [0:inf);
+  parameter real AVT = 0;  parameter real TAUV = 200 from (0:inf); parameter real BETAV = 0.5 from (0:inf);
+  parameter real AMU = 0;  parameter real TAUM = 800 from (0:inf);
+
+  real vsg, vsd, sgn, vt, n, vth, mu, x, veff, vsde, id;
+  analog begin
+    if (POL * V(s, d) >= 0) begin sgn = 1.0;  vsd = POL * V(s, d); vsg = POL * V(s, g); end
+    else                    begin sgn = -1.0; vsd = POL * V(d, s); vsg = POL * V(d, g); end
+    vt  = $vt(300.15);
+    n   = SS / (vt * ln(10.0));
+    vth = VT0 + AVT * ln(1.0 + pow(TSTRESS / TAUV, BETAV)) - SIGMA * vsd;
+    x   = (vsg - vth) / (n * vt);
+    if (x > 30.0) veff = vsg - vth; else veff = n * vt * ln(1.0 + exp(x));
+    mu   = U0 * 1e-4 * (1.0 - AMU * (1.0 - exp(-TSTRESS / TAUM))) * pow(veff, GAMMA) / (1.0 + THETA * veff);
+    vsde = vsd / pow(1.0 + pow(vsd / (veff + 1e-12), 2.5), 0.4);
+    id   = CI * W / L * mu * (veff * vsde - 0.5 * vsde * vsde) * (1.0 + LAMBDA * vsd) + GOFF * vsd * (1.0 + 0.1 * vsd);
+    I(s, d) <+ POL * sgn * id;
+    I(g, s) <+ 0.5 * CI * W * L * ddt(V(g, s));
+    I(g, d) <+ 0.5 * CI * W * L * ddt(V(g, d));
+  end
+endmodule

@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 580" font-family="'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif">
+  <defs><marker id="arO" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ea580c"/></marker></defs>
+  <rect width="820" height="580" rx="14" fill="#ffffff"/>
+  <text x="24" y="36" font-size="20" font-weight="700" fill="#0f172a">교재용 6T1C 화소 (LTPO: T3·T4만 IGZO)</text>
+
+  <g stroke="#334155" stroke-width="2.5" fill="none">
+    <!-- ELVDD rail -->
+    <line x1="450" y1="80" x2="700" y2="80"/>
+    <!-- T5 -->
+    <line x1="620" y1="80" x2="620" y2="110"/><line x1="620" y1="160" x2="620" y2="230"/>
+    <!-- T2 from DATA -->
+    <line x1="620" y1="200" x2="680" y2="200"/><line x1="750" y1="200" x2="790" y2="200"/>
+    <!-- T1 -->
+    <line x1="570" y1="260" x2="450" y2="260"/>
+    <line x1="620" y1="290" x2="620" y2="360"/>
+    <!-- T3 diode connect -->
+    <line x1="620" y1="330" x2="560" y2="330"/><line x1="480" y1="330" x2="450" y2="330"/><line x1="450" y1="330" x2="450" y2="260"/>
+    <!-- T4 from VINIT -->
+    <line x1="370" y1="260" x2="450" y2="260"/><line x1="290" y1="260" x2="200" y2="260"/>
+    <!-- Cst -->
+    <line x1="450" y1="80" x2="450" y2="158"/><line x1="450" y1="172" x2="450" y2="260"/>
+    <!-- T6, OLED -->
+    <line x1="620" y1="410" x2="620" y2="462"/><line x1="620" y1="500" x2="620" y2="530"/>
+  </g>
+  <g stroke="#334155" stroke-width="3"><line x1="424" y1="158" x2="476" y2="158"/><line x1="424" y1="172" x2="476" y2="172"/></g>
+  <g fill="#334155"><circle cx="620" cy="200" r="5"/><circle cx="450" cy="260" r="5"/><circle cx="620" cy="330" r="5"/><circle cx="620" cy="440" r="5"/><circle cx="620" cy="80" r="5"/></g>
+  <path d="M598,462 L642,462 L620,498 z" fill="#fde68a" stroke="#334155" stroke-width="2.5"/>
+  <line x1="598" y1="500" x2="642" y2="500" stroke="#334155" stroke-width="3"/>
+
+  <g font-size="15" text-anchor="middle" fill="#0f172a">
+    <rect x="580" y="110" width="80" height="50" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+    <text x="620" y="132" font-weight="700">T5</text><text x="620" y="151" font-size="14" fill="#475569">EM</text>
+    <rect x="680" y="178" width="70" height="44" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+    <text x="715" y="197" font-weight="700">T2</text><text x="715" y="215" font-size="14" fill="#475569">S2</text>
+    <rect x="570" y="230" width="100" height="60" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="3.5"/>
+    <text x="620" y="256" font-weight="700">T1 구동</text><text x="620" y="278" font-size="14" fill="#475569">W/L 4/30 µm</text>
+    <rect x="480" y="308" width="80" height="44" rx="8" fill="#fff7ed" stroke="#ea580c" stroke-width="2"/>
+    <text x="520" y="327" font-weight="700">T3</text><text x="520" y="345" font-size="14" fill="#475569">S2n</text>
+    <rect x="290" y="238" width="80" height="44" rx="8" fill="#fff7ed" stroke="#ea580c" stroke-width="2"/>
+    <text x="330" y="257" font-weight="700">T4</text><text x="330" y="275" font-size="14" fill="#475569">S1n</text>
+    <rect x="580" y="360" width="80" height="50" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+    <text x="620" y="382" font-weight="700">T6</text><text x="620" y="401" font-size="14" fill="#475569">EM</text>
+  </g>
+
+  <g font-size="15" fill="#0f172a">
+    <text x="710" y="85">ELVDD 4.6 V</text>
+    <text x="760" y="190">DATA</text>
+    <text x="100" y="265">VINIT −3.5 V</text>
+    <text x="410" y="170" text-anchor="end">Cst 0.3 pF</text>
+    <text x="440" y="250" text-anchor="end" font-weight="700">게이트 ng</text>
+    <text x="640" y="196" font-weight="700" fill="#475569">ns</text>
+    <text x="636" y="325" font-weight="700" fill="#475569">nd1</text>
+    <text x="560" y="445" text-anchor="end" font-weight="700">애노드</text>
+    <text x="580" y="490" text-anchor="end">OLED</text>
+    <text x="640" y="556">ELVSS −3.0 V</text>
+  </g>
+  <line x1="690" y1="420" x2="690" y2="490" stroke="#ea580c" stroke-width="3" marker-end="url(#arO)"/>
+  <text x="702" y="450" font-size="15" fill="#ea580c" font-weight="700">I_anode</text>
+  <text x="702" y="470" font-size="14" fill="#ea580c">여기를 예측</text>
+
+  <g font-size="14" fill="#0f172a">
+    <rect x="30" y="440" width="22" height="16" rx="3" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/><text x="60" y="453">LTPS PMOS (게이트 낮으면 켜짐)</text>
+    <rect x="30" y="470" width="22" height="16" rx="3" fill="#fff7ed" stroke="#ea580c" stroke-width="2"/><text x="60" y="483">IGZO NMOS (게이트 높으면 켜짐)</text>
+    <text x="30" y="520" fill="#475569">T3가 켜지면 T1이 다이오드 연결 → 게이트에 Vdata − |Vth| 저장</text>
+  </g>
+</svg>

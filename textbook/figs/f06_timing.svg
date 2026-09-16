@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 360" font-family="'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif">
+  <rect width="820" height="360" rx="14" fill="#ffffff"/>
+  <text x="24" y="36" font-size="20" font-weight="700" fill="#0f172a">한 프레임(16.7 ms) 안의 세 단계</text>
+  <!-- phase bands -->
+  <rect x="291" y="56" width="69" height="230" fill="#fff7ed"/>
+  <rect x="394" y="56" width="69" height="230" fill="#eff6ff"/>
+  <rect x="635" y="56" width="165" height="230" fill="#f0fdf4"/>
+  <g font-size="15" font-weight="700" text-anchor="middle">
+    <text x="325" y="76" fill="#ea580c">초기화</text>
+    <text x="428" y="76" fill="#2563eb">보상·기록</text>
+    <text x="717" y="76" fill="#16a34a">발광 + 측정</text>
+  </g>
+  <g font-size="16" font-weight="700" fill="#0f172a"><text x="30" y="126">S1</text><text x="30" y="196">S2</text><text x="30" y="266">EM</text></g>
+  <g fill="none" stroke="#0f172a" stroke-width="2.5">
+    <polyline points="120,106 291,106 291,138 360,138 360,106 610,106"/><polyline points="630,106 800,106"/>
+    <polyline points="120,176 394,176 394,208 463,208 463,176 610,176"/><polyline points="630,176 800,176"/>
+    <polyline points="120,278 223,278 223,246 532,246 532,278 610,278"/><polyline points="630,278 800,278"/>
+  </g>
+  <g font-size="18" fill="#475569"><text x="612" y="112">≈</text><text x="612" y="182">≈</text><text x="612" y="284">≈</text></g>
+  <line x1="120" y1="300" x2="800" y2="300" stroke="#94a3b8" stroke-width="1.5"/>
+  <g font-size="14" fill="#475569" text-anchor="middle">
+    <text x="120" y="320">0</text><text x="291" y="320">0.5</text><text x="463" y="320">1.0</text><text x="532" y="320">1.2 ms</text><text x="785" y="320">16.7</text>
+  </g>
+  <text x="24" y="348" font-size="14" fill="#475569">선이 낮음 = PMOS 켜짐. IGZO(T3·T4)는 반전 신호 S1n·S2n을 받는다. 전류는 1.5 ms 이후 평균.</text>
+</svg>

@@ -1,0 +1,10 @@
+* OSDI smoke test: Verilog-A resistor 1k in series with 1V
+.model r1k va_res R=1e3
+V1 in 0 1
+N1 in 0 r1k
+.control
+pre_osdi va_res.osdi
+op
+print -i(V1)
+.endc
+.end
