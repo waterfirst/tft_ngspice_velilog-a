@@ -134,12 +134,12 @@ pre{font:13.5px/1.55 var(--mono);background:var(--ink);color:#e9e5da;padding:14p
     <div class="claims">
       <a class="claim" href="#s3">
         <div class="no">①</div>
-        <div class="txt"><b>어느 TFT를 잴 것인가</b> — 가장 많이 늙는 TFT가 아니라 구동 T1이 전류를 깎는다<small>스트레스는 T5가 T1의 15배, 전류 영향은 T1이 T5의 18배</small></div>
+        <div class="txt"><b>어느 TFT를 잴 것인가</b> — 스트레스를 가장 많이 받는 TFT가 아니라 구동 T1이 전류 저하를 지배한다<small>스트레스는 T5가 T1의 15배, 전류 영향은 T1이 T5의 18배 — 6T1C·8T1C 모두 같음</small></div>
         <div class="num">−13.7% vs −0.8%<small>T1 vs T5 (그 TFT만 3000 h)</small></div>
       </a>
       <a class="claim" href="#s4">
         <div class="no">②</div>
-        <div class="txt"><b>AI를 어디에 둘 것인가</b> — 물리를 대체하면 처음 보는 조건에서 무너지고, 잔차만 맡기면 버틴다<small>같은 합성 화소 3300개, 학습에 없던 저계조에서 채점</small></div>
+        <div class="txt"><b>AI를 어디에 둘 것인가</b> — 물리를 대체하면 처음 보는 조건에서 무너지고, 잔차만 맡기면 버틴다<small>6T1C·8T1C 각각 합성 화소 3300개, 학습에 없던 저계조에서 채점 — 두 회로 모두 같음</small></div>
         <div class="num">126% vs 2.6%<small>AI 단독 vs Hybrid 평균 오차</small></div>
       </a>
       <a class="claim" href="#s6">
@@ -179,11 +179,11 @@ pre{font:13.5px/1.55 var(--mono);background:var(--ink);color:#e9e5da;padding:14p
 <section class="slide" id="s3">
   <div class="in">
     <p class="kicker">03 · 결론 ① 어느 TFT를 잴 것인가</p>
-    <h2>전류를 깎는 건 가장 많이 늙는 T5가 아니라 <em>구동 T1</em>이다</h2>
+    <h2>전류 저하를 지배하는 건 스트레스가 가장 큰 T5가 아니라 <em>구동 T1</em>이다</h2>
     <div class="evidence chart">
       <svg viewBox="0 0 1000 380" role="img" aria-label="TFT별 스트레스 지수와 전류 변화 비교">
-        <text x="110" y="28" font-size="16" font-weight="700" fill="#1b1a17">얼마나 늙나 — 스트레스 지수</text>
-        <text x="570" y="28" font-size="16" font-weight="700" fill="#1b1a17">얼마나 전류를 깎나 — 그 TFT만 3000 h 열화</text>
+        <text x="110" y="28" font-size="16" font-weight="700" fill="#1b1a17">인가 스트레스 — 스트레스 지수</text>
+        <text x="570" y="28" font-size="16" font-weight="700" fill="#1b1a17">전류 영향 — 그 TFT만 3000 h 열화</text>
         <g stroke="#dedad0"><line x1="110" y1="48" x2="110" y2="340"/><line x1="570" y1="48" x2="570" y2="340"/></g>
         <g font-size="15" fill="#1b1a17" text-anchor="end">
           <text x="96" y="80" font-weight="700">T1 구동</text><text x="96" y="128">T5 발광</text><text x="96" y="176">T6 발광</text>
@@ -250,13 +250,14 @@ pre{font:13.5px/1.55 var(--mono);background:var(--ink);color:#e9e5da;padding:14p
         <rect x="710" y="180" width="99" height="28" rx="4" fill="#9ec5f4"><title>AI-MLP · 저계조 61.3%</title></rect>
         <rect x="710" y="238" width="4.2" height="28" rx="2" fill="#eb6834"><title>Hybrid · 저계조 2.6%</title></rect>
         <g font-family="IBM Plex Mono,monospace" font-size="14" fill="#46443d"><text x="728" y="83">6.7%</text><text x="920" y="141" font-weight="600" fill="#1b1a17">125.7%</text><text x="816" y="199">61.3%</text><text x="722" y="257" font-weight="600" fill="#1b1a17">2.6%</text></g>
-        <text x="130" y="312" font-size="13" fill="#7a776d">평균 절대 백분율 오차(MAPE). 패널마다 가로축 범위가 다르므로 숫자로 비교할 것. 합성 화소 3300개, 시드 1개.</text>
+        <text x="130" y="312" font-size="13" fill="#7a776d">평균 절대 백분율 오차(MAPE). 패널마다 가로축 범위가 다르므로 숫자로 비교할 것. 6T1C 합성 화소 3300개, 시드 1개.</text>
       </svg>
     </div>
     <div class="two even" style="margin-top:20px">
       <div class="panel"><h3>AI 단독이 무너진 방식</h3>저계조 화소 400개 전부에 약 180–215 nA를 답했다(정답 50–150 nA). 트리 모델은 학습 범위 밖에서 <b>가장 가까운 칸의 값을 반복</b>한다. 튜닝이 아니라 구조의 문제다.</div>
       <div class="panel"><h3>Hybrid가 버틴 이유</h3>경로는 물리(추출 + SPICE)가 정하고 AI는 <code>log(정답 / 물리)</code>만 학습한다. 학습 화소 100개일 때도 1.9%(GBM 5.0%, 물리 3.6%). <b>실측 화소가 비쌀수록</b> 이 차이가 중요해진다.</div>
     </div>
+    <div class="panel" style="margin-top:14px"><h3>8T1C 모집단(3300개)으로 반복해도 같았다</h3>저계조에서 AI-GBM <b>127.5%</b> vs Hybrid <b>2.6%</b>. 단, 추출할 TFT가 6 → 8개로 늘자 시간 외삽의 꼬리 오차(P95)가 기존 흐름 29 → <b>39%</b>, Hybrid 27 → <b>37%</b>로 커졌다 — TFT가 많은 회로일수록 평균만 보면 안 된다.</div>
     <div class="sowhat">AI는 물리를 대체하지 말고 잔차를 맡긴다. 성능은 반드시 "범위 안 / 시간 외삽 / 조건 외삽"을 나눠 보고한다.</div>
   </div>
 </section>
@@ -264,23 +265,29 @@ pre{font:13.5px/1.55 var(--mono);background:var(--ink);color:#e9e5da;padding:14p
 <!-- 5. CLAIM 3 setup -->
 <section class="slide" id="s5">
   <div class="in">
-    <p class="kicker">05 · 결론 ③으로 가는 길</p>
-    <h2>6T1C에 T7·T8을 붙여도 수명은 <em>소수점까지 같았다</em> — 모델에 그 현상이 없었다</h2>
+    <p class="kicker">05 · 8T1C 전체 파이프라인</p>
+    <h2>8T1C를 끝까지 돌려도 수명과 예측 오차는 6T1C와 <em>같았다</em> — T7·T8이 막는 현상이 모델에 없었다</h2>
     <div class="evidence two">
       <figure class="chart" style="margin:0"><img src="textbook/figs/f11_8t1c_schematic.svg" alt="예시 8T1C 화소 회로도"></figure>
       <div>
-        <div class="stat"><div class="lab">3000 h 전류 유지율 · 중계조</div><div class="big">85.3%<span class="arrow">=</span>85.3%</div><p>6T1C = 8T1C. 고계조 88.3 = 88.3, 저계조 79.3 = 79.3. T7·T8만 늙혀도 전류 변화 0.00%.</p></div>
-        <div class="panel" style="margin-top:16px">
-          <h3>T7·T8이 막으려는 것</h3>
+        <div class="tbl" style="margin-top:0"><table style="min-width:0">
+          <tr><th>3000 h</th><th class="n">유지율 6T1C</th><th class="n">8T1C</th><th class="n">열화식 예측 오차 8T1C</th></tr>
+          <tr><td>고계조</td><td class="n">88.29%</td><td class="n">88.28%</td><td class="n">−1.17%</td></tr>
+          <tr><td>중계조</td><td class="n">85.33%</td><td class="n">85.33%</td><td class="n">−1.75%</td></tr>
+          <tr><td>저계조</td><td class="n">79.32%</td><td class="n">79.32%</td><td class="n">−4.01%</td></tr>
+        </table></div>
+        <div class="panel" style="margin-top:14px">
+          <h3>8개 TFT 모두 측정 → 추출 → 열화식 → 화소 채점</h3>
           <ul class="clean">
-            <li><b>T8 (OBS)</b> 기록 직전 T1에 강한 온바이어스 → 직전 화면의 <b>트랩 기억(히스테리시스)</b>을 지운다</li>
-            <li><b>T7</b> 애노드 리셋 → OLED 잔류 전하 제거</li>
+            <li>전류 저하 기여(중계조, 그 TFT만 3000 h): <b>T1 −13.71%</b> · T5 −0.76% · T6 −0.24% · T3 −0.20% · <b>T7·T8 0.00%</b></li>
+            <li>T7·T8 스트레스를 60 Hz 파형에서 측정: duty 0.0126(가정과 일치), |Vgs|는 T7 3.4 V · T8 11.8 V → 스트레스 지수 T7 1/8, T8 1.5배</li>
+            <li>게이트: 기존 6개 TFT 추출값·넷리스트·0 h 전류가 6T1C 결과와 동일</li>
           </ul>
-          <p class="note" style="margin-bottom:0">그런데 정답 모델에는 히스테리시스가 없고, 지표는 2프레임 정상상태 평균뿐이었다. 회로도는 넷리스트와 1:1로 대조한 예시 회로이며 제조사 회로가 아니다.</p>
+          <p class="note" style="margin-bottom:0">T8(OBS)은 직전 화면의 트랩 기억(히스테리시스)을, T7은 OLED 잔류 전하를 지우는 장치다. 정답 모델에 히스테리시스가 없고 지표가 정상상태 평균이면 둘의 효과는 0으로 나온다. 예시 회로이며 제조사 회로가 아니다.</p>
         </div>
       </div>
     </div>
-    <div class="sowhat">질문이 모델에 없으면 회로를 바꿔도 답이 안 나온다. 그래서 트랩을 모델에 넣고, 지표를 계조 전환 직후 프레임으로 바꿨다.</div>
+    <div class="sowhat">수명 지표로는 8T1C의 가치가 보이지 않는다. 그래서 트랩을 모델에 넣고, 지표를 계조 전환 직후 프레임으로 바꿨다.</div>
   </div>
 </section>
 
@@ -390,7 +397,7 @@ pre{font:13.5px/1.55 var(--mono);background:var(--ink);color:#e9e5da;padding:14p
           <li>TFT별 민감도·제거 실험 틀 — 실제 회로로 바로 다시 만들 수 있음</li>
           <li>물리 + AI 잔차 학습(Hybrid)과 3종 검증 (범위 안 / 시간 외삽 / 조건 외삽)</li>
           <li>트랩 파라미터를 recovery 곡선에서 뽑는 절차: 가역 진폭 / Δ → 세기, 회복 곡선 → τ, read 지연을 바꿔 0으로 외삽</li>
-          <li>교재 11편 — 연구실 신규 인원 온보딩용</li>
+          <li>교재 12편 — 연구실 신규 인원 온보딩용</li>
         </ul>
       </div>
     </div>
@@ -416,7 +423,7 @@ pre{font:13.5px/1.55 var(--mono);background:var(--ink);color:#e9e5da;padding:14p
           <li>파이프라인이 <b>틀리면 드러나게</b> 짜여 있다: 정답≠피팅 모델, 블라인드 시간, 칸별 채점</li>
           <li>게이트 통과: numpy 쌍둥이 식 일치, 트랩을 끄면 이전 결과 재현, τ 검증, 시간 간격 수렴</li>
           <li><code>run_all.sh</code> 재실행 시 모든 결과 바이트 동일</li>
-          <li>경향의 방향: 민감 TFT ≠ 많이 늙는 TFT, 트리 모델의 외삽 실패, OBS 효과의 τ 의존</li>
+          <li>경향의 방향: 전류 민감 TFT ≠ 고스트레스 TFT, 트리 모델의 외삽 실패, OBS 효과의 τ 의존</li>
         </ul>
       </div>
       <div class="panel">
@@ -511,7 +518,8 @@ pre{font:13.5px/1.55 var(--mono);background:var(--ink);color:#e9e5da;padding:14p
       <li>GBM의 시간 외삽 3.7%는 화소별 사용량 산포 덕분에 입력 곡선이 이미 본 범위 안에 있었던 결과에 가깝다</li>
       <li>Hybrid의 꼬리(P95 27%)는 기존 흐름(29%)에서 물려받는다. MLP 결과는 이 설정(2000 표본, 253차원)에 한정</li>
     </ul>
-    <figure class="fig"><img src="code/02_pipeline/figs/ml_compare.png" alt="ML 비교 그림" loading="lazy"></figure>
+    <figure class="fig"><img src="code/02_pipeline/figs/ml_compare.png" alt="6T1C ML 비교 그림" loading="lazy"></figure>
+    <figure class="fig"><img src="code/05_full_8t1c/figs/f13_8t1c_ml.svg" alt="8T1C ML 비교 그림" loading="lazy"></figure>
   </div>
 </section>
 
@@ -531,13 +539,14 @@ pre{font:13.5px/1.55 var(--mono);background:var(--ink);color:#e9e5da;padding:14p
       <div>
         <figure class="fig" style="margin-top:14px"><img src="textbook/figs/f10_8t1c_timing.svg" alt="8T1C 블록도와 60 Hz 타이밍" loading="lazy"></figure>
         <div class="tbl"><table>
-          <tr><th>T7·T8 스트레스</th><th class="n">가정</th><th class="n">60 Hz 파형 측정</th></tr>
-          <tr><td>duty</td><td class="n">0.012</td><td class="n">0.0061</td></tr>
-          <tr><td>T7 |Vgs|</td><td class="n">10 V</td><td class="n">3.49 V</td></tr>
-          <tr><td>T8 |Vgs|</td><td class="n">10 V</td><td class="n">11.96 V</td></tr>
+          <tr><th>T7·T8 스트레스 (7장 타이밍)</th><th class="n">가정</th><th class="n">60 Hz 파형 측정</th></tr>
+          <tr><td>duty</td><td class="n">0.012</td><td class="n">0.0126</td></tr>
+          <tr><td>T7 |Vgs| → 스트레스 지수</td><td class="n">10 V → 0.048</td><td class="n">3.42 V → 0.0059</td></tr>
+          <tr><td>T8 |Vgs| → 스트레스 지수</td><td class="n">10 V → 0.048</td><td class="n">11.85 V → 0.071</td></tr>
         </table></div>
       </div>
     </div>
+    <figure class="fig"><img src="code/05_full_8t1c/figs/f12_8t1c_grade.svg" alt="8T1C 수명과 TFT별 민감도" loading="lazy"></figure>
     <p class="note">모델: <code>ptft_hyst.va</code> — 내부 노드 <code>mem</code>이 vsg를 τ로 추종, <code>vth += KH·(V(mem) − VREFH)</code>. 72회 시뮬레이션, 결과는 <code>code/04_hysteresis_8t1c/results/</code>.</p>
   </div>
 </section>
@@ -545,7 +554,7 @@ pre{font:13.5px/1.55 var(--mono);background:var(--ink);color:#e9e5da;padding:14p
 <section class="slide appx" id="appx-e">
   <div class="in">
     <p class="kicker">부록 E · 교재와 재현</p>
-    <h2>석·박사 과정용 교재 11편 — 비유 하나와 그 비유가 틀리는 지점을 같이 적었다</h2>
+    <h2>석·박사 과정용 교재 12편 — 비유 하나와 그 비유가 틀리는 지점을 같이 적었다</h2>
     <div class="chap" id="chap"></div>
 <pre><code>git clone https://github.com/waterfirst/tft_ngspice_velilog-a.git
 cd tft_ngspice_velilog-a/code
@@ -558,10 +567,10 @@ bash run_all.sh      # ngspice(39+)와 openvaf가 PATH에 있어야 한다 → 1
 <script>
 (function(){
   var BASE = 'https://github.com/waterfirst/tft_ngspice_velilog-a/blob/main/textbook/';
-  var CH = [['0','ch00_big_picture.md','큰 그림'],['1','ch01_setup.md','설치와 연기 시험'],['2','ch02_verilog_a_tft.md','Verilog-A로 늙는 TFT'],
+  var CH = [['0','ch00_big_picture.md','큰 그림'],['1','ch01_setup.md','설치와 연기 시험'],['2','ch02_verilog_a_tft.md','Verilog-A 열화 TFT 모델'],
     ['3','ch03_measure_extract.md','측정값에서 모델카드 뽑기'],['4','ch04_aging_law.md','열화식과 블라인드 예측'],['5','ch05_pixel_6t1c.md','6T1C 화소와 애노드 전류'],
     ['6','ch06_ml_vs_physics.md','기존 vs AI vs Hybrid'],['7','ch07_real_data_8t1c.md','실측 데이터와 8T1C'],['8','ch08_ai_agents.md','AI 코딩 에이전트와 검증'],
-    ['9','ch09_hysteresis_8t1c.md','8T1C 히스테리시스와 프레임 응답'],['10','ch10_collab_snu.md','공동연구로 옮기기'],['부록','appendix.md','함정·용어·HSPICE 차이']];
+    ['9','ch09_hysteresis_8t1c.md','8T1C 히스테리시스와 프레임 응답'],['10','ch10_collab_snu.md','공동연구로 옮기기'],['11','ch11_full_8t1c.md','8T1C 전체 파이프라인'],['부록','appendix.md','함정·용어·HSPICE 차이']];
   var box = document.getElementById('chap');
   CH.forEach(function(c){
     var a = document.createElement('a'); a.href = BASE + c[1]; a.target = '_blank'; a.rel = 'noopener';

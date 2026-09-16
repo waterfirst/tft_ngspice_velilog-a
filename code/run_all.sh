@@ -18,3 +18,4 @@ echo "== ch05 pixels";  $PY run_pixels.py && $PY grade.py
 echo "== ch06 ML";      $PY ml_compare.py && $PY ml_grade.py
 echo "== ch07 8T1C";    (cd ../03_extension_8t1c && $PY pixel_8t1c.py)
 echo "== ch09 hysteresis"; (cd ../04_hysteresis_8t1c && $PY draw_schematic.py >/dev/null && $PY run_hysteresis.py | tail -1)
+echo "== ch11 full 8T1C"; (cd ../05_full_8t1c && for s in probe measure extract pixels ml figs; do $PY pipeline8.py $s > /dev/null; done && tail -3 results/gates.csv)   # dataset_8t1c.npz regeneration excluded (python pipeline8.py dataset)

@@ -1,0 +1,9 @@
+gate,case,expected,measured,error,limit,pass_,stage
+D1,failed_pixels_fraction,0,0,0,0.01,True,dataset
+E1,T1@0_U0_vs_02,71.1498,71.1498,0,1e-06,True,extract
+E1,T1@0_VT0_vs_02,1.14577,1.14577,0,1e-06,True,extract
+N1,netlist8_text_equals_ch07,1,1,0,0,True,pixels
+N2,truth_0h_고계조_vs_ch07,525.682,525.682,0,0.0001,True,pixels
+N2,truth_0h_저계조_vs_ch07,84.3306,84.3306,0,0.0001,True,pixels
+N2,truth_0h_중계조_vs_ch07,237.456,237.456,0,0.0001,True,pixels
+P1,duty_vs_S1_pulse_width,0.0125997,0.0125785,0.0016888,0.02,True,probe

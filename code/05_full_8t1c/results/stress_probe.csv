@@ -1,0 +1,3 @@
+TFT,assumed_duty,assumed_vgs_V,probed_duty,probed_vgs_V,stress_assumed,stress_probed,dvt_1000_V,dmu_1000_pct
+T7,0.012,10,0.0125785,3.41637,0.048,0.00587244,0.0145954,0.0583815
+T8,0.012,10,0.0125785,11.8469,0.048,0.070615,0.164894,0.659574

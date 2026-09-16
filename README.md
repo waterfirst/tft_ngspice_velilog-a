@@ -23,15 +23,16 @@ TFT 한 개의 I–V를 시간별로 재서 **모델 파라미터 → 열화식 
 |---|---|---|---|
 | 0 | [큰 그림](textbook/ch00_big_picture.md) | 왜 TFT 하나의 열화가 화소 전류 문제인가 | — |
 | 1 | [설치와 연기 시험](textbook/ch01_setup.md) | 내 컴퓨터에서 Verilog-A가 도는가 | `code/smoke` |
-| 2 | [Verilog-A로 늙는 TFT 만들기](textbook/ch02_verilog_a_tft.md) | 시간을 파라미터로 넣는다는 게 무슨 뜻인가 | `code/01_tft_aging` |
+| 2 | [Verilog-A로 열화 TFT 모델 만들기](textbook/ch02_verilog_a_tft.md) | 시간을 파라미터로 넣는다는 게 무슨 뜻인가 | `code/01_tft_aging` |
 | 3 | [측정값에서 모델카드 뽑기](textbook/ch03_measure_extract.md) | 정답을 모를 때 어떻게 채점하나 | `code/02_pipeline` 1–2단계 |
 | 4 | [열화식과 블라인드 예측](textbook/ch04_aging_law.md) | 1000시간 데이터로 3000시간을 맞힐 수 있나 | 3단계 |
-| 5 | [6T1C 화소 회로와 애노드 전류](textbook/ch05_pixel_6t1c.md) | 어느 TFT가 전류를 가장 많이 깎나 | 4–6단계 |
+| 5 | [6T1C 화소 회로와 애노드 전류](textbook/ch05_pixel_6t1c.md) | 어느 TFT 열화가 전류 저하를 지배하나 | 4–6단계 |
 | 6 | [기존 흐름 vs AI vs Hybrid](textbook/ch06_ml_vs_physics.md) | AI는 어디서 이기고 어디서 무너지나 | 7단계 |
 | 7 | [실측 데이터와 8T1C로 옮기기](textbook/ch07_real_data_8t1c.md) | 내 데이터·내 회로에 적용하려면 무엇을 바꾸나 | `code/03_extension_8t1c` |
 | 8 | [AI 코딩 에이전트와 같이 만들기](textbook/ch08_ai_agents.md) | AI에게 시뮬레이션 코드를 맡길 때 무엇을 검증하나 | — |
 | 9 | [8T1C 히스테리시스와 프레임 응답](textbook/ch09_hysteresis_8t1c.md) | T8이 막으려는 현상을 넣으면 달라지나 | `code/04_hysteresis_8t1c` |
 | 10 | [공동연구로 옮기기](textbook/ch10_collab_snu.md) | 측정팀·회로팀과 무엇을 맞추나 | — |
+| 11 | [8T1C 전체 파이프라인](textbook/ch11_full_8t1c.md) | 6T1C와 같은 절차를 8T1C에 끝까지 적용하면 무엇이 달라지나 | `code/05_full_8t1c` |
 | 부록 | [함정 모음·용어·HSPICE 차이](textbook/appendix.md) | 막혔을 때 먼저 볼 곳 | — |
 
 ## 빠르게 돌려보기
@@ -52,10 +53,11 @@ bash run_all.sh        # 전체 약 1분 (16코어 기준). dataset.npz 재생�
 ```
 code/
   smoke/              1장  Verilog-A 저항 하나로 설치 확인
-  01_tft_aging/       2장  늙는 n형 TFT + 교과서 2T1C
+  01_tft_aging/       2장  열화 반영 n형 TFT 모델 + 교과서 2T1C
   02_pipeline/        3–6장 6T1C LTPO 파이프라인 (측정→추출→열화식→화소→채점→ML)
   03_extension_8t1c/  7장  T7·T8을 붙인 8T1C 확장 연습
   04_hysteresis_8t1c/ 9장  트랩 상태 모델 + 60 Hz 프레임 응답 (6T1C vs 8T1C)
+  05_full_8t1c/       11장 8T1C 전체: T7·T8 측정·추출·열화식 → 화소 채점 → 민감도 → AI 비교
 textbook/             본문 (Markdown) + figs/ (SVG)
 ```
 

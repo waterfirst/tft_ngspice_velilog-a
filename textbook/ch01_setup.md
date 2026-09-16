@@ -102,4 +102,4 @@ ngspice -b smoke.cir | grep "i(v1)"
 > **적용 질문**
 > 여러분 연구실의 HSPICE 넷리스트에 `.hdl "a.va"`와 `X1 d g s tftm`이 있다면, ngspice로 옮길 때 최소 몇 곳을 바꿔야 하는가? (답은 부록 C 표에 있다)
 
-[← 0장](ch00_big_picture.md) · [다음: 2장 Verilog-A로 늙는 TFT →](ch02_verilog_a_tft.md)
+[← 0장](ch00_big_picture.md) · [다음: 2장 Verilog-A로 열화 TFT 모델 만들기 →](ch02_verilog_a_tft.md)

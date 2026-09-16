@@ -1,4 +1,4 @@
-# 2장. Verilog-A로 늙는 TFT 만들기
+# 2장. Verilog-A로 열화 TFT 모델 만들기
 
 `L3` · 45분 · 코드 `code/01_tft_aging/`
 
