@@ -37,8 +37,8 @@ TFT 한 개의 I–V를 시간별로 재서 **모델 파라미터 → 열화식 
 ## 빠르게 돌려보기
 
 ```bash
-git clone https://github.com/waterfirst/tft-aging-ml-textbook.git
-cd tft-aging-ml-textbook/code
+git clone https://github.com/waterfirst/tft_ngspice_velilog-a.git
+cd tft_ngspice_velilog-a/code
 python3 -m venv .venv && . .venv/bin/activate
 pip install -r requirements.txt
 # ngspice(39 이상)와 openvaf가 PATH에 있어야 한다 → 1장
