@@ -66,6 +66,27 @@ ul.clean li{margin:6px 0}
 .steps{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 0;padding:0;list-style:none}
 .steps li{font:600 13px/1 var(--mono);background:var(--accent-soft);color:var(--accent-ink);padding:8px 11px;border-radius:999px}
 @media print{.film{display:none}}
+.gen{position:relative;border-radius:12px;overflow:hidden;background:#070d1a;margin:16px 0 4px}
+.gen img{display:block;width:100%;height:240px;object-fit:cover}
+.gen figcaption{position:absolute;left:0;right:0;bottom:0;padding:18px 14px 9px;font-size:12.5px;color:#e5e7eb;background:linear-gradient(180deg,transparent,rgba(7,13,26,.85))}
+.gen-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.circuits{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:14px 0 6px}
+.circuits figure{margin:0;background:#fff;border:1px solid var(--rule);border-radius:10px;padding:8px}
+.circuits img{display:block;width:100%;height:auto}
+.evo{width:100%;border-collapse:collapse;font-size:14.5px;margin-top:10px;background:var(--card)}
+.evo th,.evo td{border-bottom:1px solid var(--rule);padding:8px 10px;text-align:left;vertical-align:top}
+.evo th{font:600 12.5px var(--mono);color:var(--mute);background:#efece4}
+.slide img:not(.nozoom){cursor:zoom-in}
+.lb{position:fixed;inset:0;z-index:100;background:rgba(7,10,18,.92);display:none;align-items:center;justify-content:center;overflow:auto;padding:28px}
+.lb.open{display:flex}
+.lb img{max-width:96vw;max-height:92vh;background:#fff;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.6);cursor:zoom-in;transition:max-width .2s}
+.lb.big{align-items:flex-start;justify-content:flex-start}
+.lb.big img{max-width:none;max-height:none;width:220vw;cursor:zoom-out}
+.lb .x{position:fixed;top:14px;right:18px;color:#fff;font:600 15px var(--mono);background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:8px 14px;cursor:pointer}
+.lb .hint{position:fixed;bottom:14px;left:50%;transform:translateX(-50%);color:#cbd5e1;font:13px var(--sans)}
+@media (max-width:820px){.gen-row,.circuits{grid-template-columns:1fr}.gen img{height:190px}}
+@media print{.lb{display:none!important}}
+
 
 .title .kicker{color:#f4a27c}
 .title h1{font-size:clamp(32px,4vw,50px);line-height:1.22;color:#fff;max-width:1040px}
@@ -186,6 +207,7 @@ pre{font:13.5px/1.55 var(--mono);background:var(--ink);color:#e9e5da;padding:14p
     <h2>BTS I–V를 넣으면 <em>8T1C 애노드 전류의 시간 변화</em>가 30초 만에 나온다</h2>
     <p class="sub">측정 CSV → Vth·SS·μ 추출 → 온도 포함 열화식 → 화소 바이어스로 환산 → 8T1C 과도해석(ngspice + Verilog-A). TFT별 기여를 분리해 어느 소자를 더 재야 하는지 알려준다.</p>
     <ul class="steps"><li>① CSV 검사</li><li>② 정전류 Vth · SS · μ</li><li>③ SEF + Arrhenius (Ea)</li><li>④ Vgs 파형 → PBTS/NBTS duty</li><li>⑤ 8T1C 전류(t)</li><li>⑥ T1 / T3 / T4 기여 분리</li></ul>
+    <figure class="gen"><img src="assets/gen/bts_trap.jpg" alt="바이어스·온도 스트레스에서 채널 전자가 절연막 트랩에 포획되는 개념 일러스트" loading="lazy"><figcaption>바이어스·온도 스트레스 → 채널 전자가 계면·절연막 트랩(주황)에 포획 → ΔVth · AI 생성 개념 일러스트</figcaption></figure>
     <figure class="bts-fig"><img src="assets/fig_8t1c_anode_bts_25C.jpg" alt="계조 1, 10, 40 nA에서 운전시간에 따른 애노드 전류 변화. T1만, T3만, T4만, 전체, power law 외삽 시나리오"><figcaption>공개 구조 8T1C · 25 °C · 계조 1 / 10 / 40 nA. 실선 = 전체 열화, 파선 = 단일 TFT만 열화, 점선 = power law 외삽. 합성 데이터로 파이프라인을 검증한 결과이며 실측 수치가 아니다.</figcaption></figure>
     <div class="evidence two">
       <div class="panel">
@@ -210,12 +232,38 @@ pre{font:13.5px/1.55 var(--mono);background:var(--ink);color:#e9e5da;padding:14p
   </div>
 </section>
 
+<!-- 1c. PIXEL CIRCUITS -->
+<section class="slide" id="s1c">
+  <div class="in">
+    <p class="kicker">00 · 화소 회로 <span>공개 특허·논문 수준 토폴로지 · 제조사 회로 아님</span></p>
+    <h2>6T1C → 7T1C → 8T1C: TFT가 늘수록 <em>열화가 전류로 가는 길</em>도 늘어난다</h2>
+    <div class="gen-row">
+      <figure class="gen"><img src="assets/gen/tft_stack.jpg" alt="OLED 서브픽셀에서 TFT 백플레인, 단일 TFT 단면으로 들어가는 개념 일러스트" loading="lazy"><figcaption>OLED 화소 → TFT 백플레인 → 단일 TFT · AI 생성 개념 일러스트</figcaption></figure>
+      <figure class="gen"><img src="assets/gen/ltpo_pair.jpg" alt="다결정 실리콘 구동 TFT와 산화물 스위칭 TFT가 한 기판에 있는 LTPO 개념 일러스트" loading="lazy"><figcaption>LTPO: LTPS 구동 TFT(좌) + 산화물 스위치 TFT(우) · AI 생성 개념 일러스트</figcaption></figure>
+    </div>
+    <div class="circuits">
+      <figure><img src="assets/pixel_6t1c_ltpo.svg" alt="6T1C LTPO 화소 회로"></figure>
+      <figure><img src="assets/pixel_7t1c_ltpo.svg" alt="7T1C LTPO 화소 회로, T7 애노드 초기화 추가"></figure>
+      <figure><img src="assets/pixel_8t1c_ltpo.svg" alt="8T1C LTPO 화소 회로, T8 on-bias 추가"></figure>
+    </div>
+    <p class="note" style="margin-top:2px">그림을 클릭하면 크게 볼 수 있다 · 파랑 = LTPS PMOS, 주황 = 산화물 NMOS, 초록 점선 = 그 단계에서 추가된 TFT</p>
+    <table class="evo">
+      <tr><th>구조</th><th>추가 TFT</th><th>목적</th><th>열화가 전류로 가는 새 경로</th></tr>
+      <tr><td><b>6T1C</b></td><td>T1 구동 · T2 데이터 · T3 보상 · T4 초기화 · T5/T6 발광</td><td>내부 Vth 보상</td><td>T1 ΔVth는 보상되지만, 보상 불완전·T3 킥백은 남는다</td></tr>
+      <tr><td><b>7T1C</b></td><td>+ T7 애노드 초기화</td><td>OLED 잔류 전하 제거, 저계조 균일도</td><td>T7 누설·초기화 전압이 저계조 발광에 영향</td></tr>
+      <tr><td><b>8T1C</b></td><td>+ T8 On-bias (VOBS → T1 소스)</td><td>저주파(1 Hz) 구동 시 T1 히스테리시스·플리커 완화</td><td>T8 duty가 T1 스트레스 이력을 바꾸고, T3·T4(산화물)의 누설 불균형이 게이트 전압을 흔든다</td></tr>
+    </table>
+    <div class="sowhat">그래서 T1만 재서는 부족하다 — 오늘 받는 TR1(구동)·TR3(스위치) BTS 데이터로 두 경로를 함께 본다.</div>
+  </div>
+</section>
+
 <!-- 2. METHOD -->
 <section class="slide" id="s2">
   <div class="in">
     <p class="kicker">02 · 어떻게 확인했나</p>
     <h2>실측 전에 <em>채점이 가능한</em> 시뮬레이션 환경부터 만들었다</h2>
     <p class="sub">정답을 아는 합성 세계를 만들고, 실제 연구 흐름(측정 → 추출 → 열화식 → 회로 → 전류)을 그 위에서 돌려 각 칸이 얼마나 틀리는지 따로 채점했다.</p>
+    <figure class="gen"><img src="assets/gen/sim_twin.jpg" alt="프로브 스테이션의 TFT 측정이 회로 시뮬레이션과 데이터 곡선으로 바뀌는 디지털 트윈 개념 일러스트" loading="lazy"><figcaption>측정 → 디지털 트윈(회로 시뮬레이션) → 예측 · AI 생성 개념 일러스트</figcaption></figure>
     <div class="evidence two">
       <figure class="chart" style="margin:0"><img src="textbook/figs/f01_pipeline.svg" alt="측정에서 애노드 전류까지 다섯 칸 흐름"></figure>
       <div class="panel">
@@ -660,6 +708,20 @@ bash run_all.sh      # ngspice(39+)와 openvaf가 PATH에 있어야 한다 → 1
   });
   window.addEventListener('scroll', function(){ window.requestAnimationFrame(update); }, {passive:true});
   update();
+})();
+</script>
+<div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="이미지 확대"><button class="x" type="button">닫기 ✕</button><img alt=""><div class="hint">이미지를 한 번 더 누르면 더 크게 · Esc 또는 바깥을 누르면 닫힘</div></div>
+<script>
+(function(){
+  var lb=document.getElementById('lb'), big=lb.querySelector('img');
+  function close(){lb.classList.remove('open','big');document.body.style.overflow='';}
+  document.addEventListener('click',function(e){
+    var img=e.target.closest('.slide img');
+    if(img && !img.classList.contains('nozoom')){big.src=img.currentSrc||img.src;big.alt=img.alt;lb.classList.add('open');document.body.style.overflow='hidden';e.preventDefault();return;}
+  });
+  big.addEventListener('click',function(e){e.stopPropagation();lb.classList.toggle('big');});
+  lb.addEventListener('click',function(e){if(e.target===lb||e.target.classList.contains('x'))close();});
+  document.addEventListener('keydown',function(e){if(e.key==='Escape'&&lb.classList.contains('open')){close();e.stopPropagation();}},true);
 })();
 </script>
 </body>
