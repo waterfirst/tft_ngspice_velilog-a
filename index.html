@@ -53,6 +53,20 @@ ul.clean{margin:0;padding-left:20px}
 ul.clean li{margin:6px 0}
 
 .title{background:var(--ink);color:#efece4;border-bottom:none}
+.film{padding:0;min-height:100vh;background:#070d1a;border-bottom:none;display:block;overflow:hidden}
+.film video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#070d1a}
+.film .cap{position:absolute;left:0;right:0;bottom:0;padding:34px 44px 30px;background:linear-gradient(180deg,rgba(7,13,26,0),rgba(7,13,26,.94) 55%);color:#efece4;display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap}
+.film .cap .k{font:600 13px/1.4 var(--mono);letter-spacing:.08em;color:#f5a07a;margin:0 0 8px}
+.film .cap h1{font:900 clamp(26px,3.4vw,44px)/1.25 var(--serif);margin:0;color:#fff}
+.film .cap .go{font:600 14px var(--mono);color:#cfd6e3;border:1px solid rgba(207,214,227,.35);padding:10px 16px;border-radius:999px;text-decoration:none;white-space:nowrap}
+.film .cap .go:hover{background:rgba(255,255,255,.08)}
+.bts-fig{background:#fff;border:1px solid var(--rule);border-radius:12px;padding:10px;margin:18px 0 6px}
+.bts-fig img{display:block;width:100%;height:auto}
+.bts-fig figcaption{font-size:13px;color:var(--mute);padding:6px 4px 0}
+.steps{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 0;padding:0;list-style:none}
+.steps li{font:600 13px/1 var(--mono);background:var(--accent-soft);color:var(--accent-ink);padding:8px 11px;border-radius:999px}
+@media print{.film{display:none}}
+
 .title .kicker{color:#f4a27c}
 .title h1{font-size:clamp(32px,4vw,50px);line-height:1.22;color:#fff;max-width:1040px}
 .title h1 em{font-style:normal;color:#f4a27c;border-bottom:3px solid #f4a27c}
@@ -127,6 +141,18 @@ pre{font:13.5px/1.55 var(--mono);background:var(--ink);color:#e9e5da;padding:14p
 <div class="counter"><span id="cnt">1 / 9</span><a href="#appendix">부록</a><a href="#s1">처음</a></div>
 
 <!-- 1. THESIS -->
+<!-- 0. INTRO FILM -->
+<section class="slide film" id="s0">
+  <video autoplay muted loop playsinline preload="auto" poster="assets/tft_reliability_poster.jpg" aria-label="바이어스 스트레스로 계면·절연막에 전하가 포획되고 문턱전압이 이동해 화소 애노드 전류가 줄어드는 과정을 보여주는 3D 개념 애니메이션">
+    <source src="assets/tft_reliability.mp4" type="video/mp4">
+  </video>
+  <div class="cap">
+    <div><p class="k">서울대학교 공동연구 미팅 · 2026-09-17</p>
+      <h1>TFT 신뢰성에서 화소 전류까지,<br>측정과 시뮬레이션을 한 줄로 잇는다</h1></div>
+    <a class="go" href="#s1">시작 ↓</a>
+  </div>
+</section>
+
 <section class="slide title" id="s1">
   <div class="in">
     <p class="kicker">TFT 열화 → OLED 화소 전류 · ngspice + Verilog-A + ML <span>2026-09</span></p>
@@ -150,6 +176,37 @@ pre{font:13.5px/1.55 var(--mono);background:var(--ink);color:#e9e5da;padding:14p
     </div>
     <div class="ask"><span class="lbl">제안</span><span>첫 공동 작업은 시뮬레이션이 아니라 <b>T1의 stress / read / recovery 측정 프로토콜과 τ 범위를 맞추는 것</b>이다.</span></div>
     <p class="disclaimer">모든 수치는 공개 문헌 수준 파라미터로 만든 합성 데이터에서 나왔다. 실측·PDK·특정 제조사 회로 없음. 방법을 검증하는 교보재이며 제품 예측이 아니다.</p>
+  </div>
+</section>
+
+<!-- 1b. REAL BTS PIPELINE -->
+<section class="slide" id="s1b">
+  <div class="in">
+    <p class="kicker">00 · 오늘부터 실측 <span>PMOS TR1 · NMOS TR3 · 상온/고온 · PBTS/NBTS</span></p>
+    <h2>BTS I–V를 넣으면 <em>8T1C 애노드 전류의 시간 변화</em>가 30초 만에 나온다</h2>
+    <p class="sub">측정 CSV → Vth·SS·μ 추출 → 온도 포함 열화식 → 화소 바이어스로 환산 → 8T1C 과도해석(ngspice + Verilog-A). TFT별 기여를 분리해 어느 소자를 더 재야 하는지 알려준다.</p>
+    <ul class="steps"><li>① CSV 검사</li><li>② 정전류 Vth · SS · μ</li><li>③ SEF + Arrhenius (Ea)</li><li>④ Vgs 파형 → PBTS/NBTS duty</li><li>⑤ 8T1C 전류(t)</li><li>⑥ T1 / T3 / T4 기여 분리</li></ul>
+    <figure class="bts-fig"><img src="assets/fig_8t1c_anode_bts_25C.jpg" alt="계조 1, 10, 40 nA에서 운전시간에 따른 애노드 전류 변화. T1만, T3만, T4만, 전체, power law 외삽 시나리오"><figcaption>공개 구조 8T1C · 25 °C · 계조 1 / 10 / 40 nA. 실선 = 전체 열화, 파선 = 단일 TFT만 열화, 점선 = power law 외삽. 합성 데이터로 파이프라인을 검증한 결과이며 실측 수치가 아니다.</figcaption></figure>
+    <div class="evidence two">
+      <div class="panel">
+        <h3>그림이 말하는 것</h3>
+        <ul class="clean">
+          <li><b>지배 TFT는 계조와 회로 모델이 정한다.</b> 전하기반 Cgs를 넣은 8T1C에서는 보상 스위치 T3가 저계조 전류를 가장 크게 바꿨다 (1 nA에서 −17%)</li>
+          <li><b>T4 음(−) 이동은 공개 전압 조건에선 거의 0.</b> 깊은 off 상태라서다 — 실제 VGL·VINT·타이밍이 들어가야 방향이 확정된다</li>
+          <li><b>외삽은 열화식에 따라 갈린다.</b> SEF와 power law가 10<sup>3</sup> h 이후 벌어진다 → 스트레스 시간이 예측 한계를 정한다</li>
+        </ul>
+      </div>
+      <div class="panel">
+        <h3>그래서 요청드리는 측정</h3>
+        <ul class="clean">
+          <li><b>스트레스 10<sup>5</sup> s 이상</b> — 예측 근거 한계 ≈ 최장 스트레스 × 100 (10<sup>4</sup> s면 약 280 h)</li>
+          <li><b>온도 3점</b> — 2점이면 활성화에너지가 두 점 직선으로만 정해진다</li>
+          <li><b>회복(recovery) · AC 스트레스 1–2조건</b> — DC→화소 환산 가정을 줄인다</li>
+          <li><b>C–V</b> — 산화물 스위치의 킥백(비선형 Cgs) 보정</li>
+        </ul>
+      </div>
+    </div>
+    <div class="sowhat">데이터는 로컬에서만 돌린다 — 측정 CSV와 결과는 외부로 나가지 않는다. 오늘 받은 데이터로 바로 첫 결과를 낼 수 있다.</div>
   </div>
 </section>
 
